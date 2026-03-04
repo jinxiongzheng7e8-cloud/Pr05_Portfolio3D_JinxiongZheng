@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Jinxiong Zheng - Portfolio 3D</title>
+	<link rel="stylesheet" href="css/style.css">
+	<meta name="description" content="Portfolio 3D - Three.js showcase">
+</head>
+<body>
+	<!-- 启动页面 -->
+	<div id="start-screen" class="start-screen">
+		<div class="start-content">
+			<h1 class="start-title">Jinxiong Zheng - Portfolio 3D</h1>
+			<p class="start-subtitle">Explore My 3D World</p>
+			<button id="start-btn" class="start-button">Start Exploring</button>
+		</div>
+	</div>
+
+	<!-- 加载进度条 -->
+	<div id="loading-screen" class="loading-screen hidden">
+		<div class="loading-content">
+			<h2 class="loading-title">Loading Scene...</h2>
+			<div class="progress-bar-container">
+				<div id="progress-bar" class="progress-bar"></div>
+			</div>
+			<p id="loading-text" class="loading-text">0%</p>
+		</div>
+	</div>
+
+	<!-- Three.js canvas will be appended to body by the renderer -->
+
+	<button id="reset-view-btn" class="ui-button">🏠 Reset View</button>
+
+	<!-- Camera Position Display -->
+	<div id="camera-position" class="camera-hud">
+		<span class="hud-label">Camera Position:</span>
+		<span id="camera-x" class="hud-value">X: 0.00</span>
+		<span id="camera-y" class="hud-value">Y: 0.00</span>
+		<span id="camera-z" class="hud-value">Z: 0.00</span>
+	</div>
+
+	<div id="panel-computer" class="info-panel hidden">
+		<button class="close-btn">X</button>
+		<h2>Technical Skills</h2>
+		<ul>
+			<li>Three.js / WebGL</li>
+			<li>Blender</li>
+			<li>JavaScript (ES6)</li>
+			<li>HTML / CSS</li>
+		</ul>
+		<p><small>Click on the graphics card for isolated view.</small></p>
+	</div>
+
+	<div id="panel-billar" class="info-panel hidden">
+		<button class="close-btn">X</button>
+		<h2>Projects</h2>
+		<ul>
+			<li>Project 1: Virtual Escape Room</li>
+			<li>Project 2: Product Configurator</li>
+			<li>Project 3: Architectural Visualization</li>
+		</ul>
+		<p><small>Click on the balls to push them.</small></p>
+	</div>
+
+	<div id="panel-main-screen" class="info-panel video-panel hidden">
+		<button class="close-btn">X</button>
+		<h2>Presentation Video</h2>
+		<video id="main-video" controls muted loop>
+			<source src="assets/videos/presentation.mp4" type="video/mp4">
+		</video>
+		<p>Contact Info: jinxiong@example.com | @jinxiong_art</p>
+	</div>
+
+	<div id="panel-blackboard" class="info-panel hidden">
+		<button class="close-btn">X</button>
+		<h2>Concept Diagrams</h2>
+		<img src="assets/images/sketches/concept_sketch.jpg" alt="Sketch" style="width:100%;">
+	</div>
+
+	<div id="gpu-isolate-overlay" class="overlay hidden">
+		<div class="gpu-controls">
+			<p>🔍 GPU Isolation Mode - <small>Drag to rotate 360º</small></p>
+			<button id="exit-gpu-mode">Exit (ESC)</button>
+		</div>
+	</div>
+
+	<script type="importmap">
+		{
+			"imports": {
+				"three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+				"three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+			}
+		}
+	</script>
+	<script type="module" src="js/main.js"></script>
+</body>
+</html>
+
