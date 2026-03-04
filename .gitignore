@@ -1,0 +1,7 @@
+*.blend
+*.blend1
+*.blend2
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
