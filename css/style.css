@@ -240,3 +240,32 @@ body {
 	border: 1px solid cyan;
 }
 
+/* Coordinate popup */
+.coord-popup {
+	background: rgba(20,20,30,0.95);
+	color: white;
+	padding: 8px 10px;
+	border-radius: 8px;
+	border: 1px solid rgba(0,170,255,0.25);
+	box-shadow: 0 4px 18px rgba(0,0,0,0.6);
+	font-size: 13px;
+	z-index: 10050;
+	pointer-events: auto;
+	min-width: 160px;
+}
+.coord-popup .coord-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+.coord-popup .coord-body {
+	margin-bottom: 6px;
+}
+.coord-popup .coord-actions { text-align: right; }
+.coord-popup button { cursor: pointer; padding: 6px 8px; border-radius: 6px; border: none; background: #00aaff; color: white; }
+.coord-popup .coord-close { background: transparent; color: #ddd; font-size: 14px; padding: 2px 6px; }
+.coord-popup button:hover { background: #00ccff; }
+.coord-popup .coord-close:hover { color: #ff5555; }	
+

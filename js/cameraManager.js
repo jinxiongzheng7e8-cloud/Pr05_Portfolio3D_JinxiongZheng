@@ -8,21 +8,100 @@ export class CameraManager {
             position: camera.position.clone(),
             target: controls.target.clone()
         };
+        this._isAnimating = false;
+        this._currentAnim = null;
     }
 
     goTo(targetPosition, duration = 800) {
-        // Simple immediate jump for the skeleton; can replace with tween for smooth transitions
-        if (targetPosition && targetPosition.isVector3) {
-            const offset = targetPosition.clone().add(new THREE.Vector3(0, 0.8, 1.8));
-            this.camera.position.copy(offset);
-            this.controls.target.copy(targetPosition);
-            this.controls.update();
+        // Accept THREE.Object3D (recommended) or THREE.Vector3 / plain {x,y,z}
+        if (!targetPosition) return;
+
+        let center = null;
+        let endTarget = null;
+
+        if (targetPosition instanceof THREE.Object3D) {
+            // Compute bounding box center and size for the object
+            const box = new THREE.Box3().setFromObject(targetPosition);
+            center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z, 0.001);
+
+            // Estimate a distance based on object size and camera fov
+            const fov = (this.camera.isPerspectiveCamera) ? this.camera.fov : 50;
+            const distance = maxDim * 1.8 + 2;
+
+            // Keep current view direction from controls (direction from target to camera)
+            const viewDir = this.camera.position.clone().sub(this.controls.target).normalize();
+            const endPosition = center.clone().add(viewDir.multiplyScalar(distance));
+
+            endTarget = center.clone();
+
+            // animate from current camera.position -> endPosition and controls.target -> endTarget
+            this._animateTo(endPosition, endTarget, duration);
+            return;
         }
+
+        // Fallback: accept a Vector3-like target
+        if (typeof targetPosition.x === 'number') {
+            endTarget = (targetPosition instanceof THREE.Vector3) ? targetPosition.clone() : new THREE.Vector3(targetPosition.x, targetPosition.y, targetPosition.z);
+            const offsetVec = new THREE.Vector3(0, 0.8, 1.8);
+            const endPosition = endTarget.clone().add(offsetVec);
+            this._animateTo(endPosition, endTarget, duration);
+            return;
+        }
+        return;
+    }
+
+    // Internal helper to animate camera and controls target
+    _animateTo(endPosition, endTarget, durationMs = 800) {
+        // Cancel any running animation
+        if (this._isAnimating && this._currentAnim) {
+            cancelAnimationFrame(this._currentAnim);
+            this._isAnimating = false;
+            this._currentAnim = null;
+        }
+
+        const startPos = this.camera.position.clone();
+        const startTarget = this.controls.target.clone();
+        const dur = Math.max(1, durationMs);
+        const startTime = performance.now();
+        this._isAnimating = true;
+        this.controls.enabled = false;
+
+        const ease = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+        const step = (now) => {
+            const elapsed = now - startTime;
+            const t = Math.min(elapsed / dur, 1);
+            const e = ease(t);
+
+            this.camera.position.lerpVectors(startPos, endPosition, e);
+            this.controls.target.lerpVectors(startTarget, endTarget, e);
+            this.controls.update();
+
+            if (t < 1) {
+                this._currentAnim = requestAnimationFrame(step);
+            } else {
+                this._isAnimating = false;
+                this._currentAnim = null;
+                this.controls.enabled = true;
+            }
+        };
+
+        this._currentAnim = requestAnimationFrame(step);
     }
 
     resetView() {
-        this.camera.position.copy(this.home.position);
-        this.controls.target.copy(this.home.target);
-        this.controls.update();
+        // Smoothly go back to home position
+        if (this.home && this.home.position && this.home.target) {
+            this.goTo(this.home.target, 800);
+            // ensure camera ends exactly at home position after a bit more time
+            setTimeout(() => {
+                this.camera.position.copy(this.home.position);
+                this.controls.target.copy(this.home.target);
+                this.controls.update();
+            }, 820);
+        }
     }
 }
+
