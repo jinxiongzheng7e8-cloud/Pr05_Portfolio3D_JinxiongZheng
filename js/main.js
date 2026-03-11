@@ -167,26 +167,32 @@ function loadModel() {
             
             // 初始化桌面屏幕（当相应模型加载完毕时会调用）
             const interactionsConfig = {
-                computer: { panel: 'panel-computer' },
-                pool_table: { panel: 'panel-billar', callback: () => startPoolGame(renderer, camera, controls, scene, interactiveObjects) },
-                main_screen: { panel: 'panel-main-screen' },
+                computer:         {},
+                pool_table:       { callback: () => startPoolGame(renderer, camera, controls, scene, interactiveObjects) },
+                main_screen:      {},
                 secondary_screen: {
-                    // 不弹传统 panel，改为相机动画 + overlay
                     callback: ({ cameraManager }) => {
                         cameraManager.goToView('secondaryScreenView', 1200, () => {
                             document.getElementById('screen-overlay').classList.add('open');
                         });
                     }
                 },
-                whiteboard: { panel: 'panel-blackboard' }
+                whiteboard: {}
             };
             initInteractions(renderer, camera, scene, interactiveObjects, uiManager, cameraManager, interactionsConfig, desktopScreenManager);
-            window.addEventListener('ui:resetView', () => cameraManager.resetView());
+            window.addEventListener('ui:resetView', () => cameraManager.goToView('topView', 800));
 
             // 示例：设置一个预设视角
             cameraManager.setCustomView(
                 'computerView',
                 new THREE.Vector3(-5.70, 5.82, 6.55),
+                new THREE.Vector3(0, 0.9, 0)
+            );
+
+            // 俯视视角（固定）- 用于 Reset View
+            cameraManager.setCustomView(
+                'topView',
+                new THREE.Vector3(-1.87, 3.16, 1.39),
                 new THREE.Vector3(0, 0.9, 0)
             );
 
@@ -339,7 +345,10 @@ window.addEventListener('resize', () => {
 
 function animate() {
     requestAnimationFrame(animate);
-    controls.update();
+    // 台球游戏运行时由 poolGame 自己管理相机，跳过 OrbitControls update 防止阻尼覆盖
+    if (!window.__poolGameActive) {
+        controls.update();
+    }
 
     const cameraX = document.getElementById('camera-x');
     const cameraY = document.getElementById('camera-y');
@@ -354,12 +363,15 @@ function animate() {
     const cameraRotY = document.getElementById('camera-rot-y');
     const cameraRotZ = document.getElementById('camera-rot-z');
     if (cameraRotX && cameraRotY && cameraRotZ) {
-        const rotX = (camera.rotation.x * 180 / Math.PI) % 360;
-        const rotY = (camera.rotation.y * 180 / Math.PI) % 360;
-        const rotZ = (camera.rotation.z * 180 / Math.PI) % 360;
-        cameraRotX.textContent = `RX: ${rotX.toFixed(2)}°`;
-        cameraRotY.textContent = `RY: ${rotY.toFixed(2)}°`;
-        cameraRotZ.textContent = `RZ: ${rotZ.toFixed(2)}°`;
+        // 用相机实际朝向向量计算准确的 pitch / yaw，而不是读 Euler 角
+        const dir = new THREE.Vector3();
+        camera.getWorldDirection(dir);
+        const pitch = Math.asin(-dir.y) * 180 / Math.PI;               // 俯仰角
+        const yaw   = Math.atan2(-dir.x, -dir.z) * 180 / Math.PI;     // 水平朝向
+        const roll  = (camera.rotation.z * 180 / Math.PI);             // 横滚角（通常为0）
+        cameraRotX.textContent = `Pitch: ${pitch.toFixed(1)}°`;
+        cameraRotY.textContent = `Yaw: ${yaw.toFixed(1)}°`;
+        cameraRotZ.textContent = `Roll: ${roll.toFixed(1)}°`;
     }
 
     renderer.render(scene, camera);
@@ -399,9 +411,9 @@ function animateCameraToInitialPosition() {
     isCameraAnimating = true;
 
     const startPosition = camera.position.clone();
-    const endPosition = new THREE.Vector3(0.08, 5.52, 10.66);
+    const endPosition = new THREE.Vector3(-1.87, 3.16, 1.39);
     const startTarget = controls.target.clone();
-    const endTarget = new THREE.Vector3(0, 1, 0);
+    const endTarget = new THREE.Vector3(0, 0.9, 0);
 
     const duration = 2000;
     const startTime = Date.now();
@@ -436,3 +448,13 @@ console.log('Scene initialized');
 animate(); // 启动动画循环（只调用一次）
 const startBtn = document.getElementById('start-btn');
 if (startBtn) startBtn.addEventListener('click', startExperience);
+
+// Reset View 按钮事件监听
+const resetViewBtn = document.getElementById('reset-view-btn');
+if (resetViewBtn) {
+    resetViewBtn.addEventListener('click', () => {
+        if (cameraManager) {
+            cameraManager.goToView('topView', 800);
+        }
+    });
+}
