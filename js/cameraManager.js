@@ -54,7 +54,8 @@ export class CameraManager {
     }
 
     // Internal helper to animate camera and controls target
-    _animateTo(endPosition, endTarget, durationMs = 800) {
+    // onComplete: optional callback fired when animation finishes
+    _animateTo(endPosition, endTarget, durationMs = 800, onComplete = null) {
         // Cancel any running animation
         if (this._isAnimating && this._currentAnim) {
             cancelAnimationFrame(this._currentAnim);
@@ -86,6 +87,7 @@ export class CameraManager {
                 this._isAnimating = false;
                 this._currentAnim = null;
                 this.controls.enabled = true;
+                if (typeof onComplete === 'function') onComplete();
             }
         };
 
@@ -106,10 +108,10 @@ export class CameraManager {
         };
     }
 
-    goToView(name, duration = 800) {
+    goToView(name, duration = 800, onComplete = null) {
         const view = this.customViews[name];
         if (view) {
-            this._animateTo(view.position, view.target, duration);
+            this._animateTo(view.position, view.target, duration, onComplete);
         } else {
             console.warn(`View "${name}" not found.`);
         }
@@ -139,4 +141,3 @@ export class CameraManager {
         this.controls.update();
     }
 }
-

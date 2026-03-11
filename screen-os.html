@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        :root {
+            --win-bg:      #008080;
+            --tb-bg:       #c0c0c0;
+            --tb-border:   #ffffff;
+            --tb-shadow:   #808080;
+            --tb-dark:     #404040;
+            --btn-face:    #c0c0c0;
+            --btn-hi:      #ffffff;
+            --btn-shadow:  #808080;
+            --btn-dark:    #404040;
+            --text:        #000000;
+            --win-blue:    #000080;
+            --win-blue-hi: #1084d0;
+            --pixel:       'VT323', 'Courier New', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; image-rendering: pixelated; }
+
+        body {
+            font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+            font-size: 11px;
+            background: var(--win-bg);
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            cursor: default;
+        }
+
+        /* ── TILED WALLPAPER PATTERN ── */
+        #wallpaper {
+            position: fixed;
+            inset: 0;
+            background-color: #008080;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px);
+            z-index: 0;
+        }
+
+        /* ── DESKTOP ── */
+        #desktop {
+            position: fixed;
+            top: 0; left: 0; bottom: 40px; right: 0;
+            padding: 14px 10px;
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 6px;
+            z-index: 1;
+        }
+
+        /* ── ICON ── */
+        .icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            width: 76px;
+            padding: 6px 4px 5px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .icon:hover .icon-label {
+            background: var(--win-blue);
+            color: #fff;
+            outline: 1px dotted #fff;
+        }
+        .icon.selected .icon-label {
+            background: var(--win-blue);
+            color: #fff;
+            outline: 1px dotted #fff;
+        }
+        .icon:active { transform: translate(1px, 1px); }
+
+        .icon-img {
+            width: 32px; height: 32px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            image-rendering: pixelated;
+            filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.5));
+        }
+
+        .icon-label {
+            font-size: 11px;
+            color: #fff;
+            text-align: center;
+            text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+            line-height: 1.3;
+            padding: 1px 3px;
+            max-width: 72px;
+            word-break: break-word;
+        }
+
+        /* ── SHUTDOWN ICON (desktop) ── */
+        #desk-shutdown {
+            position: fixed;
+            bottom: 48px;
+            right: 12px;
+            z-index: 2;
+        }
+
+        /* ── TASKBAR ── */
+        #taskbar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 40px;
+            background: var(--tb-bg);
+            border-top: 2px solid var(--tb-border);
+            box-shadow: inset 0 1px 0 var(--tb-shadow);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 4px;
+            z-index: 100;
+        }
+
+        /* Win98/10 raised border mixin */
+        .raised {
+            border-top: 2px solid var(--btn-hi);
+            border-left: 2px solid var(--btn-hi);
+            border-right: 2px solid var(--btn-dark);
+            border-bottom: 2px solid var(--btn-dark);
+        }
+        .sunken {
+            border-top: 2px solid var(--btn-dark);
+            border-left: 2px solid var(--btn-dark);
+            border-right: 2px solid var(--btn-hi);
+            border-bottom: 2px solid var(--btn-hi);
+        }
+
+        /* START BUTTON */
+        #start-trigger {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 32px;
+            padding: 0 8px;
+            background: var(--btn-face);
+            font-family: 'MS Sans Serif', Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        #start-trigger:active, #start-trigger.pressed { 
+            border-top: 2px solid var(--btn-dark);
+            border-left: 2px solid var(--btn-dark);
+            border-right: 2px solid var(--btn-hi);
+            border-bottom: 2px solid var(--btn-hi);
+            padding-top: 2px;
+            padding-left: 10px;
+        }
+
+        /* Win logo in start button */
+        #win-logo-small {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 1px;
+            width: 16px; height: 16px;
+            flex-shrink: 0;
+        }
+        #win-logo-small span { display: block; }
+        #win-logo-small span:nth-child(1) { background: #e84040; }
+        #win-logo-small span:nth-child(2) { background: #40c040; }
+        #win-logo-small span:nth-child(3) { background: #4040e8; }
+        #win-logo-small span:nth-child(4) { background: #e8e840; }
+
+        /* TASKBAR DIVIDER */
+        .tb-divider {
+            width: 2px;
+            height: 28px;
+            border-left: 1px solid var(--btn-shadow);
+            border-right: 1px solid var(--btn-hi);
+            margin: 0 2px;
+        }
+
+        /* SYSTEM TRAY */
+        #tray {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            height: 32px;
+            padding: 0 6px;
+            background: var(--btn-face);
+            border-top: 1px solid var(--btn-shadow);
+            border-left: 1px solid var(--btn-shadow);
+        }
+        #clock-display {
+            font-family: 'MS Sans Serif', Arial, sans-serif;
+            font-size: 11px;
+            padding: 0 6px;
+            color: var(--text);
+            cursor: default;
+        }
+
+        /* ── START MENU (Win10 flat style) ── */
+        #start-menu {
+            position: fixed;
+            bottom: 40px;
+            left: 0;
+            width: 280px;
+            background: #1a1a2a;
+            border: 2px solid #333;
+            border-bottom: none;
+            box-shadow: 3px -3px 0 #000, 4px -4px 0 rgba(0,0,0,0.3);
+            z-index: 200;
+            display: none;
+            font-family: 'MS Sans Serif', Arial, sans-serif;
+        }
+        #start-menu.open { display: block; }
+
+        /* User banner */
+        #menu-banner {
+            background: linear-gradient(90deg, #000080, #1084d0);
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #444;
+        }
+        .user-avatar-px {
+            width: 36px; height: 36px;
+            border: 2px solid #fff;
+            background: #c0c0c0;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        #menu-banner-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        /* Menu items */
+        #menu-items {
+            padding: 6px 0;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 14px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.05s;
+        }
+        .menu-item:hover { background: #000080; }
+        .menu-item-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; }
+        .menu-item-text { flex: 1; }
+        .menu-item-desc { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 1px; }
+
+        .menu-separator {
+            height: 1px;
+            background: #444;
+            margin: 4px 10px;
+        }
+
+        /* Shutdown / power row */
+        #menu-footer-row {
+            display: flex;
+            border-top: 1px solid #444;
+            background: #111;
+        }
+        .menu-footer-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 4px;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            font-size: 10px;
+            gap: 3px;
+            transition: background 0.05s;
+        }
+        .menu-footer-btn:hover { background: #000080; color: #fff; }
+        .menu-footer-btn span { font-size: 16px; }
+
+        /* ── DIALOG (msgbox style) ── */
+        .dialog-overlay {
+            position: fixed;
+            inset: 0;
+            background: transparent;
+            z-index: 300;
+            display: none;
+        }
+        .dialog-overlay.open { display: block; }
+
+        .dialog-box {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 320px;
+            background: var(--btn-face);
+            border-top: 2px solid var(--btn-hi);
+            border-left: 2px solid var(--btn-hi);
+            border-right: 2px solid var(--btn-dark);
+            border-bottom: 2px solid var(--btn-dark);
+            box-shadow: 3px 3px 0 #000;
+            z-index: 301;
+            font-family: 'MS Sans Serif', Arial, sans-serif;
+        }
+        .dialog-titlebar {
+            background: linear-gradient(90deg, #000080, #1084d0);
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .dialog-close-btn {
+            width: 16px; height: 14px;
+            background: var(--btn-face);
+            border-top: 1px solid var(--btn-hi);
+            border-left: 1px solid var(--btn-hi);
+            border-right: 1px solid var(--btn-dark);
+            border-bottom: 1px solid var(--btn-dark);
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #000;
+            line-height: 1;
+        }
+        .dialog-close-btn:active { 
+            border-top: 1px solid var(--btn-dark);
+            border-left: 1px solid var(--btn-dark);
+            border-right: 1px solid var(--btn-hi);
+            border-bottom: 1px solid var(--btn-hi);
+        }
+        .dialog-body {
+            padding: 16px 16px 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .dialog-icon { font-size: 28px; flex-shrink: 0; }
+        .dialog-text { font-size: 12px; line-height: 1.5; color: #000; }
+        .dialog-btns {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 16px 14px;
+        }
+        .dlg-btn {
+            min-width: 72px;
+            padding: 4px 12px;
+            background: var(--btn-face);
+            font-family: 'MS Sans Serif', Arial, sans-serif;
+            font-size: 11px;
+            cursor: pointer;
+            border-top: 2px solid var(--btn-hi);
+            border-left: 2px solid var(--btn-hi);
+            border-right: 2px solid var(--btn-dark);
+            border-bottom: 2px solid var(--btn-dark);
+        }
+        .dlg-btn:active {
+            border-top: 2px solid var(--btn-dark);
+            border-left: 2px solid var(--btn-dark);
+            border-right: 2px solid var(--btn-hi);
+            border-bottom: 2px solid var(--btn-hi);
+            padding-top: 6px;
+        }
+        .dlg-btn.primary { font-weight: bold; outline: 1px dotted #000; outline-offset: -3px; }
+    </style>
+</head>
+<body>
+
+<div id="wallpaper"></div>
+
+<!-- 桌面图标 -->
+<div id="desktop">
+    <div class="icon" data-type="pdf" data-path="docs/CV_Jinxiong_Zheng.pdf" data-label="CV">
+        <div class="icon-img">📄</div>
+        <div class="icon-label">CV</div>
+    </div>
+    <div class="icon" data-type="link" data-url="https://jinxiongzheng7e8-cloud.github.io/gIt-JS/MiPortfolio/index.html" data-label="Portfolio">
+        <div class="icon-img">🌐</div>
+        <div class="icon-label">Portfolio</div>
+    </div>
+    <div class="icon" data-type="link" data-url="https://github.com/jinxiongzheng7e8-cloud" data-label="GitHub">
+        <div class="icon-img">🐙</div>
+        <div class="icon-label">GitHub</div>
+    </div>
+    <div class="icon" data-type="pdf" data-path="docs/JinxiongZheng_Pr05-1_Portfolio3D_Boceto.pdf" data-label="Boceto">
+        <div class="icon-img">📝</div>
+        <div class="icon-label">Project Boceto</div>
+    </div>
+</div>
+
+<!-- 桌面关机按钮（右下角）-->
+<div id="desk-shutdown">
+    <div class="icon" id="shutdown-desk-icon" style="width:56px;">
+        <div class="icon-img" style="font-size:22px;">⏻</div>
+        <div class="icon-label">Back to 3D</div>
+    </div>
+</div>
+
+<!-- 任务栏 -->
+<div id="taskbar">
+    <!-- 开始按钮 -->
+    <div id="start-trigger" class="raised">
+        <div id="win-logo-small"><span></span><span></span><span></span><span></span></div>
+        Start
+    </div>
+
+    <div class="tb-divider"></div>
+
+    <!-- 系统托盘 -->
+    <div id="tray">
+        <div id="clock-display">00:00</div>
+    </div>
+</div>
+
+<!-- 开始菜单 -->
+<div id="start-menu">
+    <div id="menu-banner">
+        <div class="user-avatar-px">👤</div>
+        <div id="menu-banner-name">Jinxiong Zheng</div>
+    </div>
+
+    <div id="menu-items">
+        <div class="menu-item" data-type="pdf" data-path="docs/CV_Jinxiong_Zheng.pdf">
+            <div class="menu-item-icon">📄</div>
+            <div class="menu-item-text">
+                <div>CV</div>
+                <div class="menu-item-desc">CV_Jinxiong_Zheng.pdf</div>
+            </div>
+        </div>
+        <div class="menu-item" data-type="link" data-url="https://jinxiongzheng7e8-cloud.github.io/gIt-JS/MiPortfolio/index.html">
+            <div class="menu-item-icon">🌐</div>
+            <div class="menu-item-text">
+                <div>Portfolio Website</div>
+                <div class="menu-item-desc">jinxiongzheng7e8-cloud.github.io</div>
+            </div>
+        </div>
+        <div class="menu-item" data-type="link" data-url="https://github.com/jinxiongzheng7e8-cloud">
+            <div class="menu-item-icon">🐙</div>
+            <div class="menu-item-text">
+                <div>GitHub</div>
+                <div class="menu-item-desc">github.com/jinxiongzheng7e8-cloud</div>
+            </div>
+        </div>
+        <div class="menu-item" data-type="pdf" data-path="docs/JinxiongZheng_Pr05-1_Portfolio3D_Boceto.pdf">
+            <div class="menu-item-icon">📝</div>
+            <div class="menu-item-text">
+                <div>Project Boceto</div>
+                <div class="menu-item-desc">Portfolio3D_Boceto.pdf</div>
+            </div>
+        </div>
+        <div class="menu-separator"></div>
+    </div>
+
+    <div id="menu-footer-row">
+        <div class="menu-footer-btn" id="menu-back-btn">
+            <span>🔙</span>Back to 3D
+        </div>
+        <div class="menu-footer-btn" id="menu-shutdown-btn">
+            <span>⏻</span>Shut Down
+        </div>
+    </div>
+</div>
+
+<!-- 关机确认弹窗 -->
+<div class="dialog-overlay" id="shutdown-dialog">
+    <div class="dialog-box">
+        <div class="dialog-titlebar">
+            <span>Shut Down Windows</span>
+            <div class="dialog-close-btn" id="dlg-close">✕</div>
+        </div>
+        <div class="dialog-body">
+            <div class="dialog-icon">💻</div>
+            <div class="dialog-text">
+                Are you sure you want to return to the 3D scene?<br><br>
+                <b>Select an option:</b>
+            </div>
+        </div>
+        <div class="dialog-btns">
+            <button class="dlg-btn primary" id="dlg-back">↩ Back to 3D</button>
+            <button class="dlg-btn" id="dlg-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── 时钟 ──────────────────────────────
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock-display').textContent =
+            now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
+    updateClock();
+    setInterval(updateClock, 10000);
+
+    // ── 动作处理 ──────────────────────────
+    function handleAction(el) {
+        const action = el.dataset.action;
+        const type   = el.dataset.type;
+        if (action === 'back' || action === 'shutdown') { showShutdownDialog(); return; }
+        if (type === 'link' && el.dataset.url)  { window.open(el.dataset.url,  '_blank'); closeStartMenu(); }
+        if (type === 'pdf'  && el.dataset.path) { window.open(el.dataset.path, '_blank'); closeStartMenu(); }
+    }
+
+    // ── 桌面图标（双击执行，单击选中）──────
+    document.querySelectorAll('#desktop .icon').forEach(icon => {
+        let last = 0;
+        icon.addEventListener('click', () => {
+            document.querySelectorAll('.icon.selected').forEach(i => i.classList.remove('selected'));
+            icon.classList.add('selected');
+            const now = Date.now();
+            if (now - last < 450) handleAction(icon);
+            last = now;
+        });
+    });
+
+    // 桌面关机按钮
+    document.getElementById('shutdown-desk-icon').addEventListener('click', showShutdownDialog);
+
+    // ── 开始菜单 ──────────────────────────
+    const startMenu = document.getElementById('start-menu');
+
+    function openStartMenu() {
+        startMenu.classList.add('open');
+        document.getElementById('start-trigger').classList.add('pressed');
+    }
+    function closeStartMenu() {
+        startMenu.classList.remove('open');
+        document.getElementById('start-trigger').classList.remove('pressed');
+    }
+
+    document.getElementById('start-trigger').addEventListener('click', e => {
+        e.stopPropagation();
+        startMenu.classList.contains('open') ? closeStartMenu() : openStartMenu();
+    });
+
+    // 开始菜单项点击
+    document.querySelectorAll('#menu-items .menu-item').forEach(item => {
+        item.addEventListener('click', () => handleAction(item));
+    });
+
+    document.getElementById('menu-back-btn').addEventListener('click', () => {
+        closeStartMenu();
+        showShutdownDialog();
+    });
+    document.getElementById('menu-shutdown-btn').addEventListener('click', () => {
+        closeStartMenu();
+        showShutdownDialog();
+    });
+
+    // 点击外部关闭开始菜单
+    document.addEventListener('click', e => {
+        if (!startMenu.contains(e.target) && e.target.id !== 'start-trigger') closeStartMenu();
+    });
+
+    // ── 关机弹窗 ──────────────────────────
+    const shutdownDialog = document.getElementById('shutdown-dialog');
+
+    function showShutdownDialog() {
+        shutdownDialog.classList.add('open');
+    }
+    function hideShutdownDialog() {
+        shutdownDialog.classList.remove('open');
+    }
+
+    document.getElementById('dlg-back').addEventListener('click',   () => { window.location.href = './index.html'; });
+    document.getElementById('dlg-cancel').addEventListener('click', hideShutdownDialog);
+    document.getElementById('dlg-close').addEventListener('click',  hideShutdownDialog);
+
+    // 点击 overlay 关闭
+    shutdownDialog.addEventListener('click', e => { if (e.target === shutdownDialog) hideShutdownDialog(); });
+
+    // ── ESC ───────────────────────────────
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            closeStartMenu();
+            hideShutdownDialog();
+            document.querySelectorAll('.icon.selected').forEach(i => i.classList.remove('selected'));
+        }
+    });
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+</script>
+</body>
+</html>

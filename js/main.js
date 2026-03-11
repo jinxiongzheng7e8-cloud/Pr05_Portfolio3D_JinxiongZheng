@@ -5,37 +5,45 @@ import { UIManager } from './uiManager.js';
 import { CameraManager } from './cameraManager.js';
 import { initInteractions } from './interactions.js';
 import { startPoolGame, stopPoolGame } from './poolGame.js';
-import { DesktopScreenManager } from './DesktopScreenManager.js';
+import { DesktopScreenManager } from './DesktopScreenManager_new.js';
+import { desktopIcons } from './screenConfig.js';
 
 // Global variables
 let scene, camera, renderer, controls, model;
+let cameraManager; // 提升为全局，animateCameraToInitialPosition 需要访问
 let isSceneLoaded = false;
 let isCameraAnimating = false;
 
 // Initialize scene
+/**
+ * 初始化场景，包括场景创建、相机设置、渲染器配置、控制器设置等
+ */
 function initScene() {
+    // 创建场景并设置背景色和雾效
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x111122);
-    scene.fog = new THREE.FogExp2(0x111122, 0.02);
+    scene.background = new THREE.Color(0x111122); // 设置场景背景色为深蓝色
+    scene.fog = new THREE.FogExp2(0x111122, 0.02); // 设置指数雾效，增强场景深度感
 
+    // 创建透视相机并设置位置和旋转角度
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(-87.34, 70.41, 89.40);
+    camera.position.set(-87.34, 70.41, 89.40); // 设置相机位置
     camera.rotation.set(
-        THREE.MathUtils.degToRad(-37.83),
-        THREE.MathUtils.degToRad(-37.66),
-        THREE.MathUtils.degToRad(-25.38)
+        THREE.MathUtils.degToRad(-37.83), // 将角度转换为弧度设置相机X轴旋转
+        THREE.MathUtils.degToRad(-37.66), // 将角度转换为弧度设置相机Y轴旋转
+        THREE.MathUtils.degToRad(-25.38)  // 将角度转换为弧度设置相机Z轴旋转
     );
 
+    // 创建WebGL渲染器并配置参数
     renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
-    renderer.physicallyCorrectLights = false;
-    document.body.appendChild(renderer.domElement);
+    renderer.setSize(window.innerWidth, window.innerHeight); // 设置渲染器尺寸为窗口大小
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 设置像素比率，限制最大为2
+    renderer.shadowMap.enabled = true; // 启用阴影
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 设置阴影类型为软阴影
+    renderer.outputEncoding = THREE.sRGBEncoding; // 设置颜色编码为sRGB
+    renderer.toneMapping = THREE.ACESFilmicToneMapping; // 设置色调映射为ACES Filmic
+    renderer.toneMappingExposure = 1.0; // 设置色调映射曝光度
+    renderer.physicallyCorrectLights = false; // 禁用物理正确光照
+    document.body.appendChild(renderer.domElement); // 将渲染器的DOM元素添加到页面
 
     // Hide main video panel if video fails to load
     const mainVideo = document.getElementById('main-video');
@@ -110,25 +118,29 @@ function loadModel() {
     const progressBar = document.getElementById('progress-bar');
     const loadingText = document.getElementById('loading-text');
 
+    console.log('开始加载模型...');
+
     // 定义模型列表
     const models = [
-        { path: 'assets/models/models_interactive/interactiveModel.glb', pos: [0, 0, 0], scale: 1, name: 'ground' },
-        { path: 'assets/models/models_Static/Billiard_cue.glb', pos: [0, 0, 0], scale: 1, name: 'cue' },
-        { path: 'assets/models/models_Static/computer_case.glb', pos: [0, 0, 0], scale: 1, name: 'computer' },
-        { path: 'assets/models/models_Static/main_screen.glb', pos: [0, 0, 0], scale: 1, name: 'main_screen' },
-        { path: 'assets/models/models_Static/Mouse_keyboard.glb', pos: [0, 0, 0], scale: 1, name: 'mouse_keyboard' },
-        { path: 'assets/models/models_Static/pool_table.glb', pos: [0, 0, 0], scale: 1, name: 'pool_table' },
-        { path: 'assets/models/models_Static/Red_billiard_ball.glb', pos: [0, 0, 0], scale: 1, name: 'red_ball' },
-        { path: 'assets/models/models_Static/White_billiard_ball.glb', pos: [0, 0, 0], scale: 1, name: 'white_ball' },
-        { path: 'assets/models/models_Static/secondary_screen.glb', pos: [0, 0, 0], scale: 1, name: 'secondary_screen' },
-        { path: 'assets/models/models_Static/Whiteboard.glb', pos: [0, 0, 0], scale: 1, name: 'whiteboard' }
+        { path: './assets/models/models_interactive/interactiveModel.glb', pos: [0, 0, 0], scale: 1, name: 'ground' },
+        { path: './assets/models/models_Static/Billiard_cue.glb', pos: [0, 0, 0], scale: 1, name: 'cue' },
+        { path: './assets/models/models_Static/computer_case.glb', pos: [0, 0, 0], scale: 1, name: 'computer' },
+        { path: './assets/models/models_Static/main_screen.glb', pos: [0, 0, 0], scale: 1, name: 'main_screen' },
+        { path: './assets/models/models_Static/Mouse_keyboard.glb', pos: [0, 0, 0], scale: 1, name: 'mouse_keyboard' },
+        { path: './assets/models/models_Static/pool_table.glb', pos: [0, 0, 0], scale: 1, name: 'pool_table' },
+        { path: './assets/models/models_Static/Red_billiard_ball.glb', pos: [0, 0, 0], scale: 1, name: 'red_ball' },
+        { path: './assets/models/models_Static/White_billiard_ball.glb', pos: [0, 0, 0], scale: 1, name: 'white_ball' },
+        { path: './assets/models/models_Static/secondary_screen.glb', pos: [0, 0, 0], scale: 1, name: 'secondary_screen' },
+        { path: './assets/models/models_Static/Whiteboard.glb', pos: [0, 0, 0], scale: 1, name: 'whiteboard' }
     ];
+
+    console.log(`准备加载 ${models.length} 个模型`);
 
     let modelsToLoad = models.length;
     let modelsLoaded = 0;
 
     const uiManager = new UIManager();
-    const cameraManager = new CameraManager(camera, controls);
+    cameraManager = new CameraManager(camera, controls);
     const desktopScreenManager = new DesktopScreenManager(scene, camera, cameraManager);
     const interactiveObjects = {};
 
@@ -138,7 +150,7 @@ function loadModel() {
             console.warn('模型加载超时.显示fallback场景');
             showFallbackScene();
         }
-    }, 10000); // 10秒超时
+    }, 20000); // 20秒超时
 
     function onEachLoaded() {
         modelsLoaded++;
@@ -158,7 +170,14 @@ function loadModel() {
                 computer: { panel: 'panel-computer' },
                 pool_table: { panel: 'panel-billar', callback: () => startPoolGame(renderer, camera, controls, scene, interactiveObjects) },
                 main_screen: { panel: 'panel-main-screen' },
-                secondary_screen: { panel: 'panel-secondary' },
+                secondary_screen: {
+                    // 不弹传统 panel，改为相机动画 + overlay
+                    callback: ({ cameraManager }) => {
+                        cameraManager.goToView('secondaryScreenView', 1200, () => {
+                            document.getElementById('screen-overlay').classList.add('open');
+                        });
+                    }
+                },
                 whiteboard: { panel: 'panel-blackboard' }
             };
             initInteractions(renderer, camera, scene, interactiveObjects, uiManager, cameraManager, interactionsConfig, desktopScreenManager);
@@ -169,6 +188,13 @@ function loadModel() {
                 'computerView',
                 new THREE.Vector3(-5.70, 5.82, 6.55),
                 new THREE.Vector3(0, 0.9, 0)
+            );
+
+            // 副显示屏视角：根据实际坐标精确定位
+            cameraManager.setCustomView(
+                'secondaryScreenView',
+                new THREE.Vector3(-0.10, 1.41, -1.31),
+                new THREE.Vector3(-0.279, 1.148, -2.0)  // 屏幕中心
             );
         }
     }
@@ -214,9 +240,11 @@ function loadModel() {
     }
 
     models.forEach((m) => {
+        console.log(`正在加载模型: ${m.name} (${m.path})`);
         loader.load(
             m.path,
             (gltf) => {
+                console.log(`成功加载模型: ${m.name}`);
                 const mdl = gltf.scene;
                 if (m.pos) mdl.position.set(m.pos[0], m.pos[1], m.pos[2]);
                 if (m.scale) mdl.scale.set(m.scale, m.scale, m.scale);
@@ -251,18 +279,13 @@ function loadModel() {
                 scene.add(mdl);
                 interactiveObjects[m.name] = mdl;
 
-                // 如果加载的是副显示屏模型，则创建独立的桌面UI并附加到模型上
+                // 副显示屏：只附加一次到第一个 Mesh
                 if (m.name === 'secondary_screen') {
+                    let attached = false;
                     mdl.traverse((child) => {
-                        if (child.isMesh) {
-                            // 找到第一个网格作为父级
-                            desktopScreenManager.createDesktopScreen(child, [
-                                { name: '浏览器', type: 'link', url: 'https://github.com', icon: '🌐' },
-                                { name: '简历', type: 'pdf', path: 'docs/CV_Jinxiong_Zheng.pdf', icon: '📄' },
-                                { name: '项目', type: 'pdf', path: 'assets/pdfs/projects.pdf', icon: '📁' },
-                                { name: '联系', type: 'link', url: 'https://linkedin.com', icon: '📧' }
-                            ]);
-                            return; // 只附加一次
+                        if (child.isMesh && !attached) {
+                            desktopScreenManager.createDesktopScreen(child, desktopIcons);
+                            attached = true;
                         }
                     });
                 }
@@ -297,13 +320,11 @@ function loadModel() {
             },
             undefined,
             (err) => {
-                console.error('Error loading', m.path, err);
-                // 如果模型加载失败，立即显示fallback场景
+                console.error(`加载模型失败: ${m.name} (${m.path})`, err.message || err);
                 if (!isSceneLoaded) {
                     showFallbackScene();
-                } else {
-                    onEachLoaded();
                 }
+                onEachLoaded(); // 无论成败都计数，防止进度条卡死
             }
         );
     });
@@ -398,6 +419,9 @@ function animateCameraToInitialPosition() {
         } else {
             isCameraAnimating = false;
             controls.enabled = true;
+            // 动画结束后才记录 home，Reset View 回到这个视角
+            cameraManager.home.position.copy(endPosition);
+            cameraManager.home.target.copy(endTarget);
         }
     }
     updateCamera();
@@ -409,6 +433,6 @@ function easeInOutCubic(t) {
 
 initScene();
 console.log('Scene initialized');
+animate(); // 启动动画循环（只调用一次）
 const startBtn = document.getElementById('start-btn');
 if (startBtn) startBtn.addEventListener('click', startExperience);
-animate();

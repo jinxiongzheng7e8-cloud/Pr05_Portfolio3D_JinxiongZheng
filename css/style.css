@@ -269,3 +269,287 @@ body {
 .coord-popup button:hover { background: #00ccff; }
 .coord-popup .coord-close:hover { color: #ff5555; }	
 
+
+/* ════════════════════════════════════════════════════════
+   SCREEN OVERLAY — Win10 桌面弹窗
+   ════════════════════════════════════════════════════════ */
+
+#screen-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.72);
+	z-index: 500;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	backdrop-filter: blur(4px);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.35s ease;
+}
+#screen-overlay.open {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* 屏幕内容容器 — 带入场缩放动画 */
+#screen-overlay-inner {
+	width: 720px;
+	max-width: 92vw;
+	height: 480px;
+	max-height: 88vh;
+	display: flex;
+	flex-direction: column;
+	background: #041c3a;
+	border: 2px solid #1565c0;
+	box-shadow:
+		0 0 0 1px #000,
+		0 0 40px rgba(21, 101, 192, 0.6),
+		0 24px 60px rgba(0,0,0,0.8);
+	transform: scale(0.82) translateY(24px);
+	transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+	overflow: hidden;
+	font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+}
+#screen-overlay.open #screen-overlay-inner {
+	transform: scale(1) translateY(0);
+}
+
+/* 标题栏 */
+#sov-titlebar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0 8px;
+	height: 30px;
+	background: linear-gradient(90deg, #000080, #1565c0);
+	flex-shrink: 0;
+	user-select: none;
+}
+#sov-winlogo {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+	gap: 1px;
+	width: 14px; height: 14px;
+	flex-shrink: 0;
+}
+#sov-winlogo span { display: block; }
+#sov-winlogo span:nth-child(1) { background: #e84040; }
+#sov-winlogo span:nth-child(2) { background: #40c040; }
+#sov-winlogo span:nth-child(3) { background: #4040e8; }
+#sov-winlogo span:nth-child(4) { background: #e8e840; }
+
+#sov-title {
+	flex: 1;
+	font-size: 12px;
+	font-weight: bold;
+	color: #fff;
+	text-shadow: 1px 1px 0 #000;
+}
+#sov-close {
+	width: 20px; height: 18px;
+	background: #c0c0c0;
+	border-top: 2px solid #fff;
+	border-left: 2px solid #fff;
+	border-right: 2px solid #404040;
+	border-bottom: 2px solid #404040;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 11px;
+	font-weight: bold;
+	color: #000;
+	cursor: pointer;
+	line-height: 1;
+}
+#sov-close:hover { background: #ff4444; color: #fff; }
+#sov-close:active {
+	border-top: 2px solid #404040;
+	border-left: 2px solid #404040;
+	border-right: 2px solid #fff;
+	border-bottom: 2px solid #fff;
+}
+
+/* 桌面区域 */
+#sov-desktop {
+	flex: 1;
+	padding: 14px 12px;
+	display: flex;
+	flex-direction: column;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	gap: 8px;
+	position: relative;
+	/* 壁纸：Win10 蓝色渐变 + 像素网格 */
+	background:
+		repeating-linear-gradient(0deg,   transparent, transparent 7px, rgba(255,255,255,0.018) 7px, rgba(255,255,255,0.018) 8px),
+		repeating-linear-gradient(90deg,  transparent, transparent 7px, rgba(255,255,255,0.018) 7px, rgba(255,255,255,0.018) 8px),
+		linear-gradient(135deg, #041c3a 0%, #0d47a1 50%, #01579b 100%);
+	overflow: hidden;
+}
+
+/* 桌面图标 */
+.sov-icon {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	width: 74px;
+	padding: 6px 4px 5px;
+	cursor: pointer;
+	border: 1px solid transparent;
+	transition: background 0.1s;
+}
+.sov-icon:hover .sov-icon-label,
+.sov-icon.selected .sov-icon-label {
+	background: #000080;
+	color: #fff;
+	outline: 1px dotted #fff;
+}
+.sov-icon:active { transform: translate(1px,1px); }
+.sov-icon-img {
+	font-size: 30px;
+	filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.7));
+	line-height: 1;
+}
+.sov-icon-label {
+	font-size: 11px;
+	color: #fff;
+	text-align: center;
+	text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+	padding: 1px 3px;
+	line-height: 1.3;
+}
+
+/* 任务栏 */
+#sov-taskbar {
+	height: 36px;
+	background: rgba(0,0,0,0.88);
+	border-top: 1px solid rgba(255,255,255,0.1);
+	display: flex;
+	align-items: center;
+	padding: 0 6px;
+	gap: 6px;
+	flex-shrink: 0;
+}
+#sov-startbtn {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	height: 28px;
+	padding: 0 10px;
+	background: #c0c0c0;
+	border-top: 2px solid #fff;
+	border-left: 2px solid #fff;
+	border-right: 2px solid #404040;
+	border-bottom: 2px solid #404040;
+	font-size: 12px;
+	font-weight: bold;
+	color: #000;
+	cursor: pointer;
+}
+#sov-startbtn:active {
+	border-top: 2px solid #404040;
+	border-left: 2px solid #404040;
+	border-right: 2px solid #fff;
+	border-bottom: 2px solid #fff;
+	padding-top: 2px;
+	padding-left: 12px;
+}
+#sov-winsmall {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+	gap: 1px;
+	width: 14px; height: 14px;
+}
+#sov-winsmall span { display: block; }
+#sov-winsmall span:nth-child(1) { background: #e84040; }
+#sov-winsmall span:nth-child(2) { background: #40c040; }
+#sov-winsmall span:nth-child(3) { background: #4040e8; }
+#sov-winsmall span:nth-child(4) { background: #e8e840; }
+
+#sov-clock {
+	margin-left: auto;
+	font-size: 12px;
+	font-family: 'Courier New', monospace;
+	font-weight: bold;
+	color: #fff;
+	padding: 0 6px;
+}
+
+/* 开始菜单 */
+#sov-startmenu {
+	position: absolute;
+	bottom: calc(36px + 2px);  /* 任务栏高度 + border */
+	left: 0;
+	width: 260px;
+	background: #1a1a2a;
+	border: 2px solid #333;
+	border-bottom: none;
+	box-shadow: 3px -3px 0 #000;
+	z-index: 510;
+	display: none;
+	font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+}
+#sov-startmenu.open { display: block; }
+
+#sov-menu-banner {
+	background: linear-gradient(90deg, #000080, #1084d0);
+	padding: 10px 12px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	border-bottom: 1px solid #444;
+}
+#sov-avatar {
+	width: 32px; height: 32px;
+	border: 2px solid #fff;
+	background: #c0c0c0;
+	font-size: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+#sov-menu-banner span {
+	font-size: 13px;
+	font-weight: bold;
+	color: #fff;
+	text-shadow: 1px 1px 0 #000;
+}
+
+#sov-menu-items { padding: 4px 0; }
+
+.sov-mitem {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 7px 12px;
+	color: #fff;
+	cursor: pointer;
+	font-size: 12px;
+	transition: background 0.05s;
+}
+.sov-mitem:hover { background: #000080; }
+.sov-micon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; }
+.sov-mname { font-size: 12px; font-weight: bold; }
+.sov-mdesc { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 1px; }
+
+#sov-menu-footer {
+	border-top: 1px solid #444;
+	background: #111;
+	padding: 4px 0;
+}
+.sov-footbtn {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 14px;
+	color: rgba(255,255,255,0.75);
+	font-size: 12px;
+	cursor: pointer;
+	transition: background 0.05s;
+}
+.sov-footbtn:hover { background: #000080; color: #fff; }

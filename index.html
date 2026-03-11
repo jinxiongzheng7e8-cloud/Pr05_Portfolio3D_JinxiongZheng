@@ -70,7 +70,83 @@
 		<video id="main-video" controls muted loop>
 			<source src="assets/videos/presentation.mp4" type="video/mp4">
 		</video>
-		<p>Contact Info: jinxiong@example.com | @jinxiong_art</p>
+		<p>Contact Info: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1b717275637274757c5b7e637a766b777e35787476">[email&#160;protected]</a> | @jinxiong_art</p>
+	</div>
+
+	<div id="panel-secondary" class="info-panel hidden">
+		<button class="close-btn">X</button>
+		<h2>Secondary Screen</h2>
+		<p>Click the icons on the 3D screen to interact.</p>
+	</div>
+
+	<!-- ── SCREEN OVERLAY (弹出式 Win10 桌面) ───────────── -->
+	<div id="screen-overlay">
+		<div id="screen-overlay-inner">
+			<!-- 标题栏 -->
+			<div id="sov-titlebar">
+				<div id="sov-winlogo"><span></span><span></span><span></span><span></span></div>
+				<span id="sov-title">Secondary Monitor — Desktop</span>
+				<div id="sov-close" title="Close">✕</div>
+			</div>
+
+			<!-- 桌面区域 -->
+			<div id="sov-desktop">
+				<div class="sov-icon" data-type="pdf" data-path="docs/CV_Jinxiong_Zheng.pdf">
+					<div class="sov-icon-img">📄</div>
+					<div class="sov-icon-label">CV</div>
+				</div>
+				<div class="sov-icon" data-type="link" data-url="https://jinxiongzheng7e8-cloud.github.io/gIt-JS/MiPortfolio/index.html">
+					<div class="sov-icon-img">🌐</div>
+					<div class="sov-icon-label">Portfolio</div>
+				</div>
+				<div class="sov-icon" data-type="link" data-url="https://github.com/jinxiongzheng7e8-cloud">
+					<div class="sov-icon-img">🐙</div>
+					<div class="sov-icon-label">GitHub</div>
+				</div>
+				<div class="sov-icon" data-type="pdf" data-path="docs/JinxiongZheng_Pr05-1_Portfolio3D_Boceto.pdf">
+					<div class="sov-icon-img">📝</div>
+					<div class="sov-icon-label">Boceto</div>
+				</div>
+			</div>
+
+			<!-- 任务栏 -->
+			<div id="sov-taskbar">
+				<div id="sov-startbtn" title="Start">
+					<div id="sov-winsmall"><span></span><span></span><span></span><span></span></div>
+					<span>Start</span>
+				</div>
+				<div id="sov-clock"></div>
+			</div>
+		</div>
+
+		<!-- 开始菜单 -->
+		<div id="sov-startmenu">
+			<div id="sov-menu-banner">
+				<div id="sov-avatar">👤</div>
+				<span>Jinxiong Zheng</span>
+			</div>
+			<div id="sov-menu-items">
+				<div class="sov-mitem" data-type="pdf" data-path="docs/CV_Jinxiong_Zheng.pdf">
+					<span class="sov-micon">📄</span>
+					<div><div class="sov-mname">CV</div><div class="sov-mdesc">CV_Jinxiong_Zheng.pdf</div></div>
+				</div>
+				<div class="sov-mitem" data-type="link" data-url="https://jinxiongzheng7e8-cloud.github.io/gIt-JS/MiPortfolio/index.html">
+					<span class="sov-micon">🌐</span>
+					<div><div class="sov-mname">Portfolio Website</div><div class="sov-mdesc">jinxiongzheng7e8-cloud.github.io</div></div>
+				</div>
+				<div class="sov-mitem" data-type="link" data-url="https://github.com/jinxiongzheng7e8-cloud">
+					<span class="sov-micon">🐙</span>
+					<div><div class="sov-mname">GitHub</div><div class="sov-mdesc">github.com/jinxiongzheng7e8-cloud</div></div>
+				</div>
+				<div class="sov-mitem" data-type="pdf" data-path="docs/JinxiongZheng_Pr05-1_Portfolio3D_Boceto.pdf">
+					<span class="sov-micon">📝</span>
+					<div><div class="sov-mname">Project Boceto</div><div class="sov-mdesc">Portfolio3D_Boceto.pdf</div></div>
+				</div>
+			</div>
+			<div id="sov-menu-footer">
+				<div class="sov-footbtn" id="sov-back">🔙 Back to 3D</div>
+			</div>
+		</div>
 	</div>
 
 	<div id="panel-blackboard" class="info-panel hidden">
@@ -89,12 +165,88 @@
 	<script type="importmap">
 		{
 			"imports": {
-				"three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-				"three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+				"three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+				"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/"
 			}
 		}
 	</script>
 	<script type="module" src="js/main.js"></script>
+
+	<script>
+	/* ── Screen Overlay 桌面 JS ── */
+	(function () {
+		const overlay    = document.getElementById('screen-overlay');
+		const startMenu  = document.getElementById('sov-startmenu');
+
+		// 关闭 overlay，并通知 main.js 重置相机
+		function closeOverlay() {
+			overlay.classList.remove('open');
+			startMenu.classList.remove('open');
+			// 重置相机回首页视角
+			window.dispatchEvent(new CustomEvent('ui:resetView'));
+		}
+
+		// 关闭按钮
+		document.getElementById('sov-close').addEventListener('click', closeOverlay);
+
+		// 点击 overlay 背景（暗区）关闭
+		overlay.addEventListener('click', function (e) {
+			if (e.target === overlay) closeOverlay();
+		});
+
+		// ESC 关闭
+		window.addEventListener('keydown', function (e) {
+			if (e.key === 'Escape' && overlay.classList.contains('open')) closeOverlay();
+		});
+
+		// ── 桌面图标：单击选中，双击执行 ──
+		document.querySelectorAll('.sov-icon').forEach(function (icon) {
+			var last = 0;
+			icon.addEventListener('click', function () {
+				document.querySelectorAll('.sov-icon.selected').forEach(function (i) { i.classList.remove('selected'); });
+				icon.classList.add('selected');
+				var now = Date.now();
+				if (now - last < 420) handleSovAction(icon);
+				last = now;
+			});
+		});
+
+		// ── 开始菜单 ──
+		document.getElementById('sov-startbtn').addEventListener('click', function (e) {
+			e.stopPropagation();
+			startMenu.classList.toggle('open');
+		});
+		document.getElementById('screen-overlay-inner').addEventListener('click', function (e) {
+			if (!startMenu.contains(e.target) && e.target !== document.getElementById('sov-startbtn'))
+				startMenu.classList.remove('open');
+		});
+
+		document.querySelectorAll('.sov-mitem').forEach(function (item) {
+			item.addEventListener('click', function () {
+				startMenu.classList.remove('open');
+				handleSovAction(item);
+			});
+		});
+
+		document.getElementById('sov-back').addEventListener('click', closeOverlay);
+
+		// ── 动作处理 ──
+		function handleSovAction(el) {
+			var type = el.dataset.type;
+			if (type === 'link' && el.dataset.url)  window.open(el.dataset.url,  '_blank');
+			if (type === 'pdf'  && el.dataset.path) window.open(el.dataset.path, '_blank');
+		}
+
+		// ── 时钟 ──
+		function updateSovClock() {
+			var now = new Date();
+			var t = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+			var el = document.getElementById('sov-clock');
+			if (el) el.textContent = t;
+		}
+		updateSovClock();
+		setInterval(updateSovClock, 10000);
+	})();
+	</script>
 </body>
 </html>
-
