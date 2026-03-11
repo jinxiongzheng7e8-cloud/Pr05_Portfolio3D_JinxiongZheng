@@ -180,19 +180,13 @@ function loadModel() {
                 whiteboard: {}
             };
             initInteractions(renderer, camera, scene, interactiveObjects, uiManager, cameraManager, interactionsConfig, desktopScreenManager);
-            window.addEventListener('ui:resetView', () => cameraManager.goToView('topView', 800));
+            window.addEventListener('ui:resetView', () => cameraManager.resetView());
+
 
             // 示例：设置一个预设视角
             cameraManager.setCustomView(
                 'computerView',
                 new THREE.Vector3(-5.70, 5.82, 6.55),
-                new THREE.Vector3(0, 0.9, 0)
-            );
-
-            // 俯视视角（固定）- 用于 Reset View
-            cameraManager.setCustomView(
-                'topView',
-                new THREE.Vector3(-1.87, 3.16, 1.39),
                 new THREE.Vector3(0, 0.9, 0)
             );
 
@@ -202,6 +196,7 @@ function loadModel() {
                 new THREE.Vector3(-0.10, 1.41, -1.31),
                 new THREE.Vector3(-0.279, 1.148, -2.0)  // 屏幕中心
             );
+
         }
     }
 
@@ -406,14 +401,16 @@ function startExperience() {
     }
 }
 
+
 function animateCameraToInitialPosition() {
     if (isCameraAnimating) return;
     isCameraAnimating = true;
 
     const startPosition = camera.position.clone();
-    const endPosition = new THREE.Vector3(-1.87, 3.16, 1.39);
+    const endPosition = new THREE.Vector3(0.08, 5.52, 10.66);
     const startTarget = controls.target.clone();
-    const endTarget = new THREE.Vector3(0, 0.9, 0);
+    const endTarget = new THREE.Vector3(0, 1, 0);
+
 
     const duration = 2000;
     const startTime = Date.now();
@@ -454,7 +451,7 @@ const resetViewBtn = document.getElementById('reset-view-btn');
 if (resetViewBtn) {
     resetViewBtn.addEventListener('click', () => {
         if (cameraManager) {
-            cameraManager.goToView('topView', 800);
+            cameraManager.resetView();
         }
     });
 }
