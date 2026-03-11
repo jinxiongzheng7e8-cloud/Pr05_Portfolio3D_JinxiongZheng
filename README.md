@@ -1,117 +1,241 @@
-# Pr05: Portfolio 3D — Jinxiong Zheng
+Portfolio 3D - Jinxiong Zheng
 
-Este es un esqueleto de proyecto de portafolio 3D basado en Three.js. Este repositorio contiene ejemplos de HTML, CSS y varios módulos JS para construir rápidamente escenas, cargar modelos GLB e implementar interacciones básicas (detección de rayos para abrir paneles de información, cambio de cámara, etc.).
+A modern interactive 3D portfolio web application built with Three.js. This project showcases a fully interactive 3D environment with object interactions, camera controls, and dynamic UI panels.
 
-## Inicio Rápido
-- Se recomienda usar un servidor estático local (por ejemplo, VS Code Live Server o `npx http-server`), ya que abrir el archivo directamente podría causar fallos en la carga de módulos o videos.
+FEATURES
 
-Comandos de ejemplo (entorno Node.js):
+Interactive 3D Scene - Built with Three.js for high-quality 3D rendering
+Object Interaction - Click on 3D objects to display information panels
+Advanced Camera Controls - Rotate, zoom, and pan with intuitive mouse controls
+Responsive UI - Dynamic panels that populate based on selected objects
+Modular Architecture - Clean JavaScript modules for easy maintenance and extension
+Asset Management - Organized structure for models, videos, images, and materials
+GPU Isolation Mode - Focus on individual objects with camera isolation
 
-```bash
-# Si usas http-server
-npx http-server -c-1 .
+QUICK START
 
-# O instala Live Server en VS Code y haz clic en "Go Live"
-```
+Prerequisites:
+- A modern web browser with WebGL support
+- A local HTTP server (recommended)
 
-## Instrucciones de Uso
+Running Locally:
 
-### Controles
-- **Botón izquierdo del ratón**: Rotar la cámara
-- **Botón central del ratón**: Mover la cámara
-- **Rueda del ratón**: Zoom
-- **Clic en objetos**: Mostrar paneles de información
-- **Tecla ESC**: Salir del modo de aislamiento de GPU
-- **Botón de restablecer vista**: Volver a la vista inicial
+We recommend using a local HTTP server, as opening the file directly may cause module loading or video playback issues.
 
-### Límites de la Cámara
-- **Rango de zoom**: 5 a 15 unidades
-- **Rango de rotación**: 45 grados a cada lado (90° en total)
-- **Rango de desplazamiento**: 
-  - Eje X: -5 a 5
-  - Eje Y: 0 a 2
-  - Eje Z: -5 a 5
+Option 1: Using VS Code Live Server
+1. Install the Live Server extension in VS Code
+2. Right-click index.html and select "Open with Live Server"
 
-## Estructura del Proyecto (archivos creados)
-- `index.html` Punto de entrada principal (contiene paneles UI e importmap)
-- `css/style.css` Estilos básicos
-- `js/main.js` Lógica principal de escena y renderizado
-- `js/interactions.js` Detección de rayos y activación de paneles UI
-- `js/cameraManager.js` Esqueleto de transición/restablecimiento de cámara
-- `js/uiManager.js` Gestión de visualización/ocultación de paneles HTML
+Option 2: Using Node.js (http-server)
 
-## Modelos y Recursos
-- Coloque los archivos `.glb` exportados en los directorios correspondientes `assets/models/static/` y `assets/models/interactive/`.
-- Coloque los videos en `assets/videos/` y las imágenes en `assets/images/`.
+npm install -g http-server
+cd d:\2A3D_SSD\M06_HTML\Pr05_Portfolio3D_JinxiongZheng
+http-server -c-1 .
 
-## Convención de Nombres (resumen)
-- Los objetos interactivos deben nombrarse en Blender, por ejemplo `graphics_card`, `pool_table`, `main_screen`, `blackboard`. Después de exportar, el código los identificará a través de `userData.type` o `object.name`.
+Option 3: Using Python
 
-## Instrucciones de Despliegue
+# Python 3
+python -m http.server 8000
 
-### Alojamiento Estático
-Este proyecto puede desplegarse en cualquier servicio de alojamiento estático:
+# Python 2
+python -m SimpleHTTPServer 8000
 
-#### GitHub Pages
-1. Empuje el código a un repositorio de GitHub
-2. Vaya a Configuración del repositorio > Pages
-3. Seleccione la rama para desplegar (generalmente `main` o `master`)
-4. Su sitio estará disponible en `https://[usuario].github.io/[nombre-repositorio]`
+Then open your browser to http://localhost:8000 (or the port shown in your server output).
 
-#### Netlify
-1. Cree una cuenta en [netlify.com](https://www.netlify.com)
-2. Arrastre y suelte la carpeta del proyecto en el panel de Netlify
-3. Su sitio se desplegará instantáneamente con una URL aleatoria
-4. Puede personalizar el dominio en la configuración del sitio
+CONTROLS
 
-#### Vercel
-1. Instale Vercel CLI: `npm i -g vercel`
-2. Ejecute `vercel` en el directorio del proyecto
-3. Siga las instrucciones para desplegar
-4. Su sitio estará disponible con un dominio `.vercel.app`
+Left Mouse Button - Rotate camera around the scene
+Middle Mouse Button - Pan/move the camera
+Mouse Wheel - Zoom in/out
+Click on Objects - Display information panels
+ESC Key - Exit GPU isolation mode
+Reset View Button - Return to initial camera position
 
-### Servidor Personalizado
-Para mayor control, puede desplegar en un servidor personalizado:
+PROJECT STRUCTURE
 
-1. Suba todos los archivos del proyecto a su servidor web
-2. Asegúrese de configurar correctamente los tipos MIME para archivos `.glb`
-3. Configure CORS si es necesario para recursos externos
-4. Configure HTTPS para conexiones seguras
+Pr05_Portfolio3D_JinxiongZheng/
+├── index.html - Main entry point (UI panels & import map)
+├── README.md - This file
+├── css/
+│   └── style.css - Main stylesheet
+├── js/
+│   ├── main.js - Scene setup & rendering loop
+│   ├── interactions.js - Raycasting & UI panel activation
+│   ├── cameraManager.js - Camera transitions & controls
+│   ├── DesktopScreenManager.js - 管理副屏上的桌面交互和图标
+│   ├── uiManager.js - Panel visibility & content management
+│   └── poolGame.js - Pool game mechanics (if included)
+└── assets/
+    ├── images/ - Texture images & icons
+    ├── videos/ - Video files for the scene
+    ├── materials/ - Material files & textures
+    └── models/
+        ├── models_Static/ - Non-interactive 3D models (.glb)
+        └── models_interactive/ - Interactive 3D models (.glb)
 
-## Compatibilidad del Navegador
+USAGE GUIDE
 
-- Chrome/Edge: ✅ Totalmente compatible
-- Firefox: ✅ Totalmente compatible
-- Safari: ✅ Totalmente compatible
-- Opera: ✅ Totalmente compatible
+Loading 3D Models
 
-## Solución de Problemas
+1. Export from Blender: Export your 3D models as .glb (glTF Binary) files
+2. Place Files:
+   - Non-interactive objects: assets/models/models_Static/
+   - Interactive objects: assets/models/models_interactive/
+3. Update HTML/JS: Reference your models in index.html and main.js
 
-### Los modelos no cargan
-- Asegúrese de que todos los archivos de modelo estén en el directorio correcto
-- Verifique si hay mensajes de error en la consola del navegador
-- Valide que el servidor esté sirviendo archivos `.glb` con el tipo MIME correcto
+Naming Convention
 
-### Problemas de rendimiento
-- Intente reducir la relación de píxeles en `main.js`
-- Cierre otras pestañas del navegador para liberar recursos
-- Actualice los controladores gráficos
-- Use un navegador moderno para obtener un mejor rendimiento
+Interactive objects should be explicitly named in Blender, such as:
+- graphics_card
+- pool_table
+- main_screen
+- blackboard
+- gpu_model
 
-### Los controles no responden
-- Asegúrese de hacer clic en el área del lienzo
-- Verifique que JavaScript esté habilitado en su navegador
-- Intente actualizar la página
+These names will be accessible via object.userData.type or object.name in the JavaScript code.
 
-## Comentarios y Soporte
+Creating Interactive Objects
 
-¡Apreciamos sus comentarios y sugerencias! Siéntase libre de:
+1. Name your object in Blender appropriately
+2. Export the model as .glb
+3. In main.js, add the model to the scene using THREE.GLTFLoader
+4. In interactions.js, add raycasting logic to detect clicks
+5. In uiManager.js, create a panel that displays when the object is clicked
 
-- **Reportar problemas**: Crear un issue en GitHub
-- **Solicitar funciones**: Usar el rastreador de issues para sugerir nuevas funciones
-- **Contacto directo**: jinxiong@example.com | @jinxiong_art
+CAMERA CONSTRAINTS
 
-## Sugerencias Futuras
-- Agregar transiciones suaves de cámara (por ejemplo, usando `tween.js`)
-- Implementar comportamientos de clic más detallados en `interactions.js` (física de las bolas, modo de aislamiento de GPU)
-- Exportar y colocar modelos `.glb` para verificar el flujo de carga
+For a controlled experience, the camera is constrained with the following limits:
+
+Zoom Level: 5 to 15 units
+Rotation: 45 degrees to each side (90 degrees total)
+X-Axis Pan: -5 to 5
+Y-Axis Pan: 0 to 2
+Z-Axis Pan: -5 to 5
+
+These values can be adjusted in cameraManager.js.
+
+FILE DESCRIPTIONS
+
+index.html - Defines HTML structure, UI panels, and Three.js import map
+style.css - Styles for panels, buttons, and responsive layout
+main.js - Initializes Three.js scene, loads models, and handles animation loop
+interactions.js - Implements raycasting for object selection and panel display
+cameraManager.js - Manages camera movement, zoom, rotation, and constraints
+uiManager.js - Handles showing/hiding and updating information panels
+poolGame.js - Optional pool/billiards game mechanics
+
+DEPLOYMENT
+
+To deploy this project:
+
+1. Build or optimize assets (compress images, optimize models)
+2. Upload all files to a web server
+3. Ensure CORS headers allow model/video loading if hosted on a different domain
+4. Test in target browsers for WebGL support
+
+Recommended Hosting Providers:
+- Netlify (free, easy deployment)
+- GitHub Pages (free for public repos)
+- Vercel (free, excellent performance)
+- Your own server (full control)
+
+DEVELOPMENT TIPS
+
+Use Chrome DevTools for debugging and performance profiling
+Monitor WebGL draw calls and memory usage in the Performance tab
+Use browser console to check for CORS or loading errors
+Test camera constraints and interactions on different screen sizes
+Optimize model file sizes before deployment
+
+RESOURCES
+
+Three.js Documentation: https://threejs.org/docs/
+glTF/GLB Format: https://www.khronos.org/gltf/
+WebGL Performance Tips: https://www.khronos.org/api/webgl
+Blender Export Guide: https://docs.blender.org/manual/en/latest/addons/io_scene_gltf2/index.html
+
+LICENSE
+
+This project is created for educational purposes.
+
+AUTHOR
+
+Jinxiong Zheng
+
+Last Updated: March 9, 2026
+
+STATIC HOSTING
+
+This project can be deployed on any static hosting service:
+
+GitHub Pages
+
+1. Push the code to a GitHub repository
+2. Go to Repository Settings > Pages
+3. Select the branch to deploy (usually main or master)
+4. Your site will be available at https://[username].github.io/[repository-name]
+
+Netlify
+
+1. Create an account at netlify.com
+2. Drag and drop the project folder into the Netlify dashboard
+3. Your site will deploy instantly with a random URL
+4. You can customize the domain in site settings
+
+Vercel
+
+1. Install Vercel CLI: npm i -g vercel
+2. Run vercel in the project directory
+3. Follow the instructions to deploy
+4. Your site will be available with a .vercel.app domain
+
+Custom Server
+
+For more control, you can deploy on a custom server:
+
+1. Upload all project files to your web server
+2. Ensure .glb files are served with the correct MIME type
+3. Configure CORS if necessary for external resources
+4. Configure HTTPS for secure connections
+
+BROWSER COMPATIBILITY
+
+Chrome/Edge - Fully compatible
+Firefox - Fully compatible
+Safari - Fully compatible
+Opera - Fully compatible
+
+TROUBLESHOOTING
+
+Models Not Loading
+
+- Ensure all model files are in the correct directory
+- Check for error messages in the browser console
+- Validate that the server is serving .glb files with the correct MIME type
+
+Performance Issues
+
+- Try reducing the pixel ratio in main.js
+- Close other browser tabs to free up resources
+- Update graphics drivers
+- Use a modern browser for better performance
+
+Controls Not Responding
+
+- Ensure you are clicking in the canvas area
+- Verify that JavaScript is enabled in your browser
+- Try refreshing the page
+
+FEEDBACK AND SUPPORT
+
+We appreciate your feedback and suggestions! Feel free to:
+
+- Report issues: Create an issue on GitHub
+- Request features: Use the issue tracker to suggest new features
+- Contact: jinxiong@example.com
+
+FUTURE SUGGESTIONS
+
+Add smooth camera transitions (for example, using tween.js)
+Implement more detailed click behaviors in interactions.js (ball physics, GPU isolation mode)
+Export and place .glb models to verify the loading workflow

@@ -5,6 +5,7 @@ import { UIManager } from './uiManager.js';
 import { CameraManager } from './cameraManager.js';
 import { initInteractions } from './interactions.js';
 import { startPoolGame, stopPoolGame } from './poolGame.js';
+import { DesktopScreenManager } from './DesktopScreenManager.js';
 
 // Global variables
 let scene, camera, renderer, controls, model;
@@ -18,8 +19,12 @@ function initScene() {
     scene.fog = new THREE.FogExp2(0x111122, 0.02);
 
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 20, 50);
-    camera.lookAt(0, 1, 0);
+    camera.position.set(-87.34, 70.41, 89.40);
+    camera.rotation.set(
+        THREE.MathUtils.degToRad(-37.83),
+        THREE.MathUtils.degToRad(-37.66),
+        THREE.MathUtils.degToRad(-25.38)
+    );
 
     renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -105,18 +110,18 @@ function loadModel() {
     const progressBar = document.getElementById('progress-bar');
     const loadingText = document.getElementById('loading-text');
 
-    // 定义模型列表，为需要交互的模型设置 collider: true
+    // 定义模型列表
     const models = [
         { path: 'assets/models/models_interactive/interactiveModel.glb', pos: [0, 0, 0], scale: 1, name: 'ground' },
         { path: 'assets/models/models_Static/Billiard_cue.glb', pos: [0, 0, 0], scale: 1, name: 'cue' },
-        { path: 'assets/models/models_Static/computer_case.glb', pos: [0, 0, 0], scale: 1, name: 'computer', collider: true },
-        { path: 'assets/models/models_Static/main_screen.glb', pos: [0, 0, 0], scale: 1, name: 'main_screen', collider: true },
+        { path: 'assets/models/models_Static/computer_case.glb', pos: [0, 0, 0], scale: 1, name: 'computer' },
+        { path: 'assets/models/models_Static/main_screen.glb', pos: [0, 0, 0], scale: 1, name: 'main_screen' },
         { path: 'assets/models/models_Static/Mouse_keyboard.glb', pos: [0, 0, 0], scale: 1, name: 'mouse_keyboard' },
-        { path: 'assets/models/models_Static/pool_table.glb', pos: [0, 0, 0], scale: 1, name: 'pool_table', collider: true },
+        { path: 'assets/models/models_Static/pool_table.glb', pos: [0, 0, 0], scale: 1, name: 'pool_table' },
         { path: 'assets/models/models_Static/Red_billiard_ball.glb', pos: [0, 0, 0], scale: 1, name: 'red_ball' },
         { path: 'assets/models/models_Static/White_billiard_ball.glb', pos: [0, 0, 0], scale: 1, name: 'white_ball' },
-        { path: 'assets/models/models_Static/secondary_screen.glb', pos: [0, 0, 0], scale: 1, name: 'secondary_screen', collider: true },
-        { path: 'assets/models/models_Static/Whiteboard.glb', pos: [0, 0, 0], scale: 1, name: 'whiteboard', collider: true }
+        { path: 'assets/models/models_Static/secondary_screen.glb', pos: [0, 0, 0], scale: 1, name: 'secondary_screen' },
+        { path: 'assets/models/models_Static/Whiteboard.glb', pos: [0, 0, 0], scale: 1, name: 'whiteboard' }
     ];
 
     let modelsToLoad = models.length;
@@ -124,7 +129,16 @@ function loadModel() {
 
     const uiManager = new UIManager();
     const cameraManager = new CameraManager(camera, controls);
+    const desktopScreenManager = new DesktopScreenManager(scene, camera, cameraManager);
     const interactiveObjects = {};
+
+    // 添加超时，如果模型加载太慢，显示fallback场景
+    const loadTimeout = setTimeout(() => {
+        if (modelsLoaded < modelsToLoad) {
+            console.warn('模型加载超时.显示fallback场景');
+            showFallbackScene();
+        }
+    }, 10000); // 10秒超时
 
     function onEachLoaded() {
         modelsLoaded++;
@@ -135,8 +149,11 @@ function loadModel() {
         }
 
         if (modelsLoaded >= modelsToLoad) {
+            clearTimeout(loadTimeout);
             isSceneLoaded = true;
             console.log('All models loaded');
+            
+            // 初始化桌面屏幕（当相应模型加载完毕时会调用）
             const interactionsConfig = {
                 computer: { panel: 'panel-computer' },
                 pool_table: { panel: 'panel-billar', callback: () => startPoolGame(renderer, camera, controls, scene, interactiveObjects) },
@@ -144,33 +161,56 @@ function loadModel() {
                 secondary_screen: { panel: 'panel-secondary' },
                 whiteboard: { panel: 'panel-blackboard' }
             };
-            initInteractions(renderer, camera, scene, interactiveObjects, uiManager, cameraManager, interactionsConfig);
+            initInteractions(renderer, camera, scene, interactiveObjects, uiManager, cameraManager, interactionsConfig, desktopScreenManager);
             window.addEventListener('ui:resetView', () => cameraManager.resetView());
+
+            // 示例：设置一个预设视角
+            cameraManager.setCustomView(
+                'computerView',
+                new THREE.Vector3(-5.70, 5.82, 6.55),
+                new THREE.Vector3(0, 0.9, 0)
+            );
         }
     }
 
-    // 辅助函数：为模型创建不可见碰撞体
-    function addColliderForModel(model, rootName) {
-        const box = new THREE.Box3().setFromObject(model);
-        const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3());
+    function showFallbackScene() {
+        clearTimeout(loadTimeout);
+        isSceneLoaded = true;
+        console.log('显示fallback场景');
 
-        if (size.length() === 0) return null;
+        // 创建简单的几何体作为fallback
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
+        cube.position.set(0, 0.5, 0);
+        cube.userData.interactive = true;
+        cube.userData.type = 'fallback_cube';
+        scene.add(cube);
 
-        const colliderGeo = new THREE.BoxGeometry(size.x, size.y, size.z);
-        const colliderMat = new THREE.MeshBasicMaterial({ visible: false });
-        const colliderMesh = new THREE.Mesh(colliderGeo, colliderMat);
-        colliderMesh.position.copy(center);
+        // 添加地面
+        const groundGeo = new THREE.PlaneGeometry(10, 10);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = 0;
+        scene.add(ground);
 
-        colliderMesh.userData = {
-            type: rootName,
-            interactive: true,
-            rootName: rootName,
-            originalModel: model
+        // 初始化基本交互
+        const interactionsConfig = {
+            fallback_cube: { panel: 'panel-computer' } // 复用面板
         };
+        initInteractions(renderer, camera, scene, { fallback_cube: cube }, uiManager, cameraManager, interactionsConfig, desktopScreenManager);
 
-        scene.add(colliderMesh);
-        return colliderMesh;
+        // 隐藏加载屏幕
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) loadingScreen.classList.add('hidden');
+
+        // 设置相机
+        cameraManager.jumpToView(
+            { x: 2, y: 2, z: 2 },
+            { x: -30, y: 45, z: 0 },
+            new THREE.Vector3(0, 0.5, 0)
+        );
     }
 
     models.forEach((m) => {
@@ -211,6 +251,22 @@ function loadModel() {
                 scene.add(mdl);
                 interactiveObjects[m.name] = mdl;
 
+                // 如果加载的是副显示屏模型，则创建独立的桌面UI并附加到模型上
+                if (m.name === 'secondary_screen') {
+                    mdl.traverse((child) => {
+                        if (child.isMesh) {
+                            // 找到第一个网格作为父级
+                            desktopScreenManager.createDesktopScreen(child, [
+                                { name: '浏览器', type: 'link', url: 'https://github.com', icon: '🌐' },
+                                { name: '简历', type: 'pdf', path: 'docs/CV_Jinxiong_Zheng.pdf', icon: '📄' },
+                                { name: '项目', type: 'pdf', path: 'assets/pdfs/projects.pdf', icon: '📁' },
+                                { name: '联系', type: 'link', url: 'https://linkedin.com', icon: '📧' }
+                            ]);
+                            return; // 只附加一次
+                        }
+                    });
+                }
+
                 // 如果这是台球桌，为桌面创建一个透明平面作为精确点击触发器
                 if (m.name === 'pool_table') {
                     // 根据模型实际尺寸调整 PlaneGeometry 的宽高
@@ -237,20 +293,17 @@ function loadModel() {
                     interactiveObjects.colliders.pool_table_plane = plane;
                 }
 
-                if (m.collider) {
-                    const collider = addColliderForModel(mdl, m.name);
-                    if (collider) {
-                        if (!interactiveObjects.colliders) interactiveObjects.colliders = {};
-                        interactiveObjects.colliders[m.name] = collider;
-                    }
-                }
-
                 onEachLoaded();
             },
             undefined,
             (err) => {
                 console.error('Error loading', m.path, err);
-                onEachLoaded();
+                // 如果模型加载失败，立即显示fallback场景
+                if (!isSceneLoaded) {
+                    showFallbackScene();
+                } else {
+                    onEachLoaded();
+                }
             }
         );
     });
@@ -274,6 +327,18 @@ function animate() {
         cameraX.textContent = `X: ${camera.position.x.toFixed(2)}`;
         cameraY.textContent = `Y: ${camera.position.y.toFixed(2)}`;
         cameraZ.textContent = `Z: ${camera.position.z.toFixed(2)}`;
+    }
+
+    const cameraRotX = document.getElementById('camera-rot-x');
+    const cameraRotY = document.getElementById('camera-rot-y');
+    const cameraRotZ = document.getElementById('camera-rot-z');
+    if (cameraRotX && cameraRotY && cameraRotZ) {
+        const rotX = (camera.rotation.x * 180 / Math.PI) % 360;
+        const rotY = (camera.rotation.y * 180 / Math.PI) % 360;
+        const rotZ = (camera.rotation.z * 180 / Math.PI) % 360;
+        cameraRotX.textContent = `RX: ${rotX.toFixed(2)}°`;
+        cameraRotY.textContent = `RY: ${rotY.toFixed(2)}°`;
+        cameraRotZ.textContent = `RZ: ${rotZ.toFixed(2)}°`;
     }
 
     renderer.render(scene, camera);

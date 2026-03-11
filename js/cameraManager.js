@@ -8,6 +8,7 @@ export class CameraManager {
             position: camera.position.clone(),
             target: controls.target.clone()
         };
+        this.customViews = {};
         this._isAnimating = false;
         this._currentAnim = null;
     }
@@ -94,14 +95,48 @@ export class CameraManager {
     resetView() {
         // Smoothly go back to home position
         if (this.home && this.home.position && this.home.target) {
-            this.goTo(this.home.target, 800);
-            // ensure camera ends exactly at home position after a bit more time
-            setTimeout(() => {
-                this.camera.position.copy(this.home.position);
-                this.controls.target.copy(this.home.target);
-                this.controls.update();
-            }, 820);
+            this._animateTo(this.home.position, this.home.target, 800);
         }
+    }
+
+    setCustomView(name, position, target) {
+        this.customViews[name] = {
+            position: position,
+            target: target,
+        };
+    }
+
+    goToView(name, duration = 800) {
+        const view = this.customViews[name];
+        if (view) {
+            this._animateTo(view.position, view.target, duration);
+        } else {
+            console.warn(`View "${name}" not found.`);
+        }
+    }
+
+    /**
+     * Immediately set camera position/rotation and optionally controls target.
+     * `rotationDegrees` should be {x,y,z} in degrees (converted to radians internally).
+     */
+    jumpToView(position, rotationDegrees, target = null) {
+        if (position) {
+            this.camera.position.set(position.x, position.y, position.z);
+        }
+        if (rotationDegrees) {
+            this.camera.rotation.set(
+                THREE.MathUtils.degToRad(rotationDegrees.x),
+                THREE.MathUtils.degToRad(rotationDegrees.y),
+                THREE.MathUtils.degToRad(rotationDegrees.z)
+            );
+        }
+        if (target) {
+            this.controls.target.copy(target);
+        } else {
+            // 默认看向世界高度 0.9 处的点，可根据需要改为 (0,0,0)
+            this.controls.target.set(0, 0.9, 0);
+        }
+        this.controls.update();
     }
 }
 

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { startPoolGame, stopPoolGame } from './poolGame.js';
 
-export function initInteractions(renderer, camera, scene, interactiveObjects, uiManager, cameraManager, interactionsConfig = {}) {
+export function initInteractions(renderer, camera, scene, interactiveObjects, uiManager, cameraManager, interactionsConfig = {}, desktopScreenManager = null) {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
@@ -15,7 +15,6 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         scene.traverse(node => {
             if (node.isMesh && node.userData && node.userData.interactive) {
                 meshes.push(node);
-                console.debug('collectInteractiveMeshes found:', node.name, node.userData.type);
             }
         });
         return meshes;
@@ -28,7 +27,6 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
     }
 
     function onClick(event) {
-        console.debug('interactions:onClick', {clientX: event.clientX, clientY: event.clientY});
         // If a panel is open, close it first so clicks still work
         if (panelOpen) {
             document.querySelectorAll('.info-panel').forEach(p => p.classList.add('hidden'));
@@ -68,6 +66,13 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         let targetModel = original || hit;
         let rootName = hit.userData.rootName || hit.userData.type || (original && original.userData && original.userData.type);
 
+        // Handle Canvas Screen clicks (desktop-style)
+        if (hit.userData.type === 'canvas-screen' && desktopScreenManager) {
+            desktopScreenManager.handleCanvasScreenClick(intersects[0]);
+            desktopScreenManager.goToScreen();
+            return;
+        }
+
         const cfg = (rootName && interactionsConfig[rootName]) ? interactionsConfig[rootName] : null;
 
         if (cfg) {
@@ -75,7 +80,11 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
                 uiManager.showPanel(cfg.panel);
                 panelOpen = true;
             }
-            cameraManager.goTo(targetModel, 1000);
+            if (rootName === 'computer') {
+                cameraManager.goToView('computerView', 1000);
+            } else {
+                cameraManager.goTo(targetModel, 1000);
+            }
             if (typeof cfg.callback === 'function') {
                 try {
                     cfg.callback({ hit, root: targetModel, uiManager, cameraManager, interactiveObjects, renderer, camera });
@@ -89,7 +98,7 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
                 case 'computer':
                 case 'gpu':
                     uiManager.showPanel('panel-computer');
-                    cameraManager.goTo(targetModel, 1000);
+                    cameraManager.goToView('computerView', 1000);
                     panelOpen = true;
                     break;
                 case 'pool':
