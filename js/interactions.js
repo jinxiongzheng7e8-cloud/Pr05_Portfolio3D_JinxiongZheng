@@ -6,14 +6,15 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
     const mouse = new THREE.Vector2();
 
     let panelOpen = false;
-    // Prevent duplicate initialization
+    // 防止重复初始化
     if (renderer.domElement.__interactionsInit) return;
     renderer.domElement.__interactionsInit = true;
 
     function collectInteractiveMeshes() {
         const meshes = [];
         scene.traverse(node => {
-            if (node.isMesh && node.userData && node.userData.interactive) {
+            if (node.isMesh && node.userData && node.userData.interactive
+                && node.userData.type !== 'canvas-screen') {
                 meshes.push(node);
             }
         });
@@ -37,7 +38,7 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         getMouseCoords(event);
         raycaster.setFromCamera(mouse, camera);
 
-        // If pool game is running, stop game when clicking outside the table
+        // 如果台球小游戏正在运行，点击非台面区域时停止游戏
         if (window.__poolGameActive) {
             const interactiveMeshesForCheck = collectInteractiveMeshes();
             const intersectsCheck = raycaster.intersectObjects(interactiveMeshesForCheck, true);
@@ -61,17 +62,13 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         const hit = intersects[0].object;
         const hitPoint = intersects[0].point.clone();
 
-        // Determine root model name (prefer originalModel associated with collider)
+        // 确定根模型名称（优先使用碰撞体关联的 originalModel）
         let original = hit.userData.originalModel || null;
         let targetModel = original || hit;
         let rootName = hit.userData.rootName || hit.userData.type || (original && original.userData && original.userData.type);
 
-        // Handle Canvas Screen clicks (desktop-style)
-        if (hit.userData.type === 'canvas-screen' && desktopScreenManager) {
-            desktopScreenManager.handleCanvasScreenClick(intersects[0]);
-            desktopScreenManager.goToScreen();
-            return;
-        }
+        // Handle Canvas Screen clicks (desktop-style) — 已改为不可互动，跳过
+        // if (hit.userData.type === 'canvas-screen') return;
 
         const cfg = (rootName && interactionsConfig[rootName]) ? interactionsConfig[rootName] : null;
 
@@ -93,15 +90,15 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
                 }
             }
         } else {
-            // Fallback handling when interactionsConfig is not found (should not trigger theoretically)
-            console.warn(`interactions: No configuration found for object "${rootName}", please add it in main.js interactionsConfig.`);
+            // 没有找到 interactionsConfig 配置时的兜底处理（理论上不应再触发）
+            console.warn(`interactions: 未找到对象 "${rootName}" 的配置，请在 main.js 的 interactionsConfig 中添加。`);
         }
 
-        // Show coordinate popup (for debugging)
+        // 显示坐标弹出框（调试用）
         createCoordPopup(hitPoint);
     }
 
-    // Hover highlight
+    // 悬停高亮
     let hoveredObject = null;
 
     function restoreHover(obj) {
@@ -163,7 +160,7 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         }
     }
 
-    // Close panel button
+    // 关闭面板按钮
     document.querySelectorAll('.close-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.info-panel').forEach(p => p.classList.add('hidden'));
@@ -172,7 +169,7 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         });
     });
 
-    // ESC to close panel
+    // ESC 关闭面板
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             document.querySelectorAll('.info-panel').forEach(p => p.classList.add('hidden'));
@@ -185,10 +182,10 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         }
     });
 
-    renderer.domElement.addEventListener('click', onClick, false);
+    renderer.domElement.addEventListener('dblclick', onClick, false);
     renderer.domElement.addEventListener('mousemove', onMouseMove, {passive: true});
 
-    // Coordinate popup (for debugging)
+    // 坐标弹出框（调试用）
     let _coordPopup = null;
     function createCoordPopup(worldPos) {
         if (_coordPopup) _coordPopup.remove();

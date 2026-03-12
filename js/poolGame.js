@@ -1,26 +1,27 @@
 import * as THREE from 'three';
+import { setHudVisible } from './hudToggle.js';
 
 // ═══════════════════════════════════════════════════════════
 //  CONSTANTS  ← 按模型微调
 // ═══════════════════════════════════════════════════════════
-const BALL_Y      = 1.228;   // 球心高度（可调）
-const BALL_R      = 0.058;  // 球半径（可调）
-const FRICTION    = 0.982;  // 每帧速度衰减 (<1)
-const RESTITUTION = 0.78;   // 边界反弹系数
-const MAX_POWER   = 8.5;    // 最大冲量
-const POWER_RATE  = 5.5;    // 每秒充能速率
-const CUE_LEN     = 1.55;   // 杆长（视觉）
+const BALL_Y      = 1.26;   // 台面高度下降 0.2（原 1.32）
+const BALL_R      = 0.058;
+const FRICTION    = 0.982;
+const RESTITUTION = 0.78;
+const MAX_POWER   = 8.5;
+const POWER_RATE  = 5.5;
+const CUE_LEN     = 1.55;
 
-// 桌面边界（由口袋位置推算，可微调）
-const TX_MIN = -3.08, TX_MAX = -0.65;
-const TZ_MIN =  0.72, TZ_MAX =  2.03;
+// 台球桌边界（由四角坐标精确定义）
+const TX_MIN = -3.101, TX_MAX = -0.711;
+const TZ_MIN =  0.725, TZ_MAX =  1.938;
 const TABLE_CENTER = new THREE.Vector3(
     -1.957, BALL_Y, 1.149
 );
 
-// 相机俯视位置（固定）
-const CAM_POS    = new THREE.Vector3(-1.87, 3.16, 1.39);
-const CAM_TARGET = TABLE_CENTER.clone();
+// 相机俯视位置（正上方，X/Z 与目标点一致固定在 Y 轴上）
+const CAM_POS    = new THREE.Vector3(-1.872, 3.16, 1.376);
+const CAM_TARGET = new THREE.Vector3(-1.872, 1.228, 1.376);
 
 // 六个口袋
 const POCKET_R = 0.13;
@@ -120,7 +121,12 @@ function makeBall(origModel, pos, isWhite) {
     let mesh;
     if (origModel) {
         mesh = origModel.clone(true);
-        mesh.traverse(n => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; } });
+        // 强制显示：原模型被隐藏后 clone 会继承 visible:false
+        mesh.visible = true;
+        mesh.traverse(n => { 
+            n.visible = true;
+            if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; }
+        });
         // 将模型几何中心对齐到原点（修正 GLB 原点偏移）
         const box = new THREE.Box3().setFromObject(mesh);
         const center = box.getCenter(new THREE.Vector3());
@@ -145,7 +151,7 @@ function makeAimLine(scene) {
     const pts = [new THREE.Vector3(), new THREE.Vector3(1,0,0)];
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
     const mat = new THREE.LineDashedMaterial({
-        color:0xffffff, dashSize:0.06, gapSize:0.04, opacity:0.55, transparent:true
+        color:0xff2222, dashSize:0.06, gapSize:0.04, opacity:0.75, transparent:true
     });
     const line = new THREE.Line(geo, mat);
     line.computeLineDistances();
@@ -234,19 +240,25 @@ function stepPhysics(dt) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  CUE POSITION
+//  CUE POSITION  ← 锁定白球后方，跟随 aimDir 旋转
 // ═══════════════════════════════════════════════════════════
 function positionCue(pullBack) {
     if (!S?.cueMesh) return;
-    const wb   = S.balls[0].mesh.position;
-    const dist = CUE_LEN * 0.5 + BALL_R + 0.03 + pullBack;
-    S.cueMesh.position.set(
-        wb.x - S.aimDir.x * dist,
-        BALL_Y + 0.01,
-        wb.z - S.aimDir.z * dist
-    );
-    // Assumes GLB cue's long axis = local Y → rotate X -90° then Y for direction
-    S.cueMesh.rotation.set(-Math.PI / 2, 0, Math.atan2(S.aimDir.x, S.aimDir.z));
+    const wb = S.balls[0].mesh.position;
+
+    const backDist     = 1.2 + pullBack;
+    const heightOffset = 0.18;
+
+    // 杆子位置：白球沿 aimDir 反方向后方
+    const cx = wb.x - S.aimDir.x * backDist;
+    const cy = BALL_Y + heightOffset;
+    const cz = wb.z - S.aimDir.z * backDist;
+    S.cueMesh.position.set(cx, cy, cz);
+
+    // 用 lookAt 让杆子 -Z 轴朝向白球，再补偿 GLB 自身轴向（-X 为长轴）
+    // lookAt 把 -Z 对齐到目标，所以再绕 Y 转 -90° 让 -X 也对齐
+    S.cueMesh.lookAt(wb.x, BALL_Y, wb.z);
+    S.cueMesh.rotateY(Math.PI / 2);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -277,6 +289,7 @@ function buildPocketMeshes(scene) {
         );
         m.rotation.x = Math.PI / 2;
         m.position.copy(p).setY(BALL_Y - 0.01);
+        m.visible = false;  // 不可见，仅用于逻辑判定
         scene.add(m);
         return m;
     });
@@ -327,9 +340,13 @@ function startPoolGame(renderer, camera, controls, scene, interactiveObjects) {
 
     camera.position.copy(CAM_POS);
     controls.target.copy(CAM_TARGET);
+    camera.up.set(0, 0, -1);   // 正上方俯视时固定 up 轴，防止 gimbal lock 翻转
     controls.update();
     controls.enabled = false;
     window.__poolGameActive = true;
+
+    // 游戏中隐藏坐标 HUD
+    setHudVisible(false);
 
     ['cue','red_ball','white_ball'].forEach(n => {
         if (interactiveObjects[n]) interactiveObjects[n].visible = false;
@@ -348,7 +365,12 @@ function startPoolGame(renderer, camera, controls, scene, interactiveObjects) {
     let cueMesh;
     if (cueModel) {
         const inner = cueModel.clone(true);
-        inner.traverse(n => { if (n.isMesh) n.castShadow = true; });
+        // 强制显示：原模型隐藏后 clone 继承 visible:false
+        inner.visible = true;
+        inner.traverse(n => { 
+            n.visible = true;
+            if (n.isMesh) n.castShadow = true; 
+        });
         // 居中
         const box = new THREE.Box3().setFromObject(inner);
         const center = box.getCenter(new THREE.Vector3());
@@ -361,6 +383,7 @@ function startPoolGame(renderer, camera, controls, scene, interactiveObjects) {
             new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.5 })
         );
     }
+    // 杆子直接加入场景，世界坐标跟随白球位置 + 瞄准线方向
     scene.add(cueMesh);
 
     const aimLine = makeAimLine(scene);
@@ -425,8 +448,9 @@ function startPoolGame(renderer, camera, controls, scene, interactiveObjects) {
 
         // Always enforce camera lock
         camera.position.copy(CAM_POS);
+        camera.up.set(0, 0, -1);
         controls.target.copy(CAM_TARGET);
-        controls.update(); // 同步 OrbitControls 内部状态，防止 main loop 阻尼覆盖
+        controls.update();
 
         if (S.phase === 'charging') {
             S.power = Math.min(S.power + POWER_RATE * dt, MAX_POWER);
@@ -491,14 +515,19 @@ function stopPoolGame() {
     S.removeEsc?.();
     if (S.rafId) cancelAnimationFrame(S.rafId);
     S.controls.enabled = true;
-    // 重新同步 OrbitControls 内部状态，避免接管时弹回旧位置
+    S.camera.up.set(0, 1, 0);  // 恢复默认 up 轴
     S.controls.target.copy(CAM_TARGET);
     S.controls.update();
     window.__poolGameActive = false;
 
+    // HUD 状态由 hudToggle.js 自行管理，退出游戏不强制恢复
+
     destroyUI();
     S.active = false;
     S = null;
+
+    // 触发 Reset View，回到入场后的默认视角
+    window.dispatchEvent(new Event('ui:resetView'));
 }
 
 export { startPoolGame, stopPoolGame };

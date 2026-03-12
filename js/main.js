@@ -6,7 +6,7 @@ import { CameraManager } from './cameraManager.js';
 import { initInteractions } from './interactions.js';
 import { startPoolGame, stopPoolGame } from './poolGame.js';
 import { DesktopScreenManager } from './DesktopScreenManager_new.js';
-import { desktopIcons } from './screenConfig.js';
+import { initHudToggle, setHudVisible } from './hudToggle.js';
 
 // Global variables
 let scene, camera, renderer, controls, model;
@@ -123,13 +123,13 @@ function loadModel() {
     // 定义模型列表
     const models = [
         { path: './assets/models/models_interactive/interactiveModel.glb', pos: [0, 0, 0], scale: 1, name: 'ground' },
-        { path: './assets/models/models_Static/Billiard_cue.glb', pos: [0, 0, 0], scale: 1, name: 'cue' },
+        { path: './assets/models/models_Static/Billiard_cue_oig.glb', pos: [0, 0, 0], scale: 1, name: 'cue' },
         { path: './assets/models/models_Static/computer_case.glb', pos: [0, 0, 0], scale: 1, name: 'computer' },
         { path: './assets/models/models_Static/main_screen.glb', pos: [0, 0, 0], scale: 1, name: 'main_screen' },
         { path: './assets/models/models_Static/Mouse_keyboard.glb', pos: [0, 0, 0], scale: 1, name: 'mouse_keyboard' },
         { path: './assets/models/models_Static/pool_table.glb', pos: [0, 0, 0], scale: 1, name: 'pool_table' },
-        { path: './assets/models/models_Static/Red_billiard_ball.glb', pos: [0, 0, 0], scale: 1, name: 'red_ball' },
-        { path: './assets/models/models_Static/White_billiard_ball.glb', pos: [0, 0, 0], scale: 1, name: 'white_ball' },
+        { path: './assets/models/models_Static/Red_billiard_ball_oig.glb', pos: [0, 0, 0], scale: 1, name: 'red_ball' },
+        { path: './assets/models/models_Static/White_billiard_ball_oig.glb', pos: [0, 0, 0], scale: 1, name: 'white_ball' },
         { path: './assets/models/models_Static/secondary_screen.glb', pos: [0, 0, 0], scale: 1, name: 'secondary_screen' },
         { path: './assets/models/models_Static/Whiteboard.glb', pos: [0, 0, 0], scale: 1, name: 'whiteboard' }
     ];
@@ -171,17 +171,14 @@ function loadModel() {
                 pool_table:       { callback: () => startPoolGame(renderer, camera, controls, scene, interactiveObjects) },
                 main_screen:      {},
                 secondary_screen: {
-                    callback: ({ cameraManager }) => {
-                        cameraManager.goToView('secondaryScreenView', 1200, () => {
-                            document.getElementById('screen-overlay').classList.add('open');
-                        });
+                    callback: () => {
+                        document.getElementById('screen-overlay').classList.add('open');
                     }
                 },
                 whiteboard: {}
             };
             initInteractions(renderer, camera, scene, interactiveObjects, uiManager, cameraManager, interactionsConfig, desktopScreenManager);
             window.addEventListener('ui:resetView', () => cameraManager.resetView());
-
 
             // 示例：设置一个预设视角
             cameraManager.setCustomView(
@@ -193,10 +190,9 @@ function loadModel() {
             // 副显示屏视角：根据实际坐标精确定位
             cameraManager.setCustomView(
                 'secondaryScreenView',
-                new THREE.Vector3(-0.10, 1.41, -1.31),
-                new THREE.Vector3(-0.279, 1.148, -2.0)  // 屏幕中心
+                new THREE.Vector3(-0.03, 1.46, -1.25),
+                new THREE.Vector3(-0.279 + 0.5, 1.148, -2.0 + 0.5)  // canvas 位置（+0.5x, +0.5z）
             );
-
         }
     }
 
@@ -291,9 +287,23 @@ function loadModel() {
                     });
                 }
 
-                // 如果这是台球桌，为桌面创建一个透明平面作为精确点击触发器
+                // 如果这是台球桌，修复材质 + 创建不可见碰撞平面
                 if (m.name === 'pool_table') {
-                    // 根据模型实际尺寸调整 PlaneGeometry 的宽高
+                    // 修复台球桌模型材质
+                    mdl.traverse((node) => {
+                        if (node.isMesh && node.material) {
+                            const mats = Array.isArray(node.material) ? node.material : [node.material];
+                            mats.forEach(mat => {
+                                if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
+                                    mat.roughness  = 0.75;
+                                    mat.metalness  = 0.05;
+                                    mat.envMapIntensity = 0.4;
+                                    mat.needsUpdate = true;
+                                }
+                            });
+                        }
+                    });
+
                     const planeGeo = new THREE.PlaneGeometry(2.0, 1.5);
                     const planeMat = new THREE.MeshBasicMaterial({
                         color: 0x00ff00,
@@ -322,9 +332,6 @@ function loadModel() {
             undefined,
             (err) => {
                 console.error(`加载模型失败: ${m.name} (${m.path})`, err.message || err);
-                if (!isSceneLoaded) {
-                    showFallbackScene();
-                }
                 onEachLoaded(); // 无论成败都计数，防止进度条卡死
             }
         );
@@ -401,7 +408,6 @@ function startExperience() {
     }
 }
 
-
 function animateCameraToInitialPosition() {
     if (isCameraAnimating) return;
     isCameraAnimating = true;
@@ -410,7 +416,6 @@ function animateCameraToInitialPosition() {
     const endPosition = new THREE.Vector3(0.08, 5.52, 10.66);
     const startTarget = controls.target.clone();
     const endTarget = new THREE.Vector3(0, 1, 0);
-
 
     const duration = 2000;
     const startTime = Date.now();
@@ -441,17 +446,8 @@ function easeInOutCubic(t) {
 }
 
 initScene();
+initHudToggle(); // 坐标 HUD 默认隐藏，按 H 键显示/隐藏
 console.log('Scene initialized');
-animate(); // 启动动画循环（只调用一次）
+animate();
 const startBtn = document.getElementById('start-btn');
 if (startBtn) startBtn.addEventListener('click', startExperience);
-
-// Reset View 按钮事件监听
-const resetViewBtn = document.getElementById('reset-view-btn');
-if (resetViewBtn) {
-    resetViewBtn.addEventListener('click', () => {
-        if (cameraManager) {
-            cameraManager.resetView();
-        }
-    });
-}

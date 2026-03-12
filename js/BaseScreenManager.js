@@ -1,13 +1,8 @@
-
 import * as THREE from 'three';
 
 /**
  * 屏幕管理器基类
  * 提供屏幕管理的公共功能，包括Canvas初始化、纹理创建、相机控制等
- */
-/**
- * BaseScreenManager类 - 屏幕管理器基类
- * 用于管理3D场景中的屏幕显示和交互
  */
 export class BaseScreenManager {
     constructor(scene, camera, cameraManager) {
@@ -44,15 +39,10 @@ export class BaseScreenManager {
         this.screenMesh = new THREE.Mesh(geometry, material);
 
         if (parentMesh) {
-            // 如果提供了父网格，将屏幕附加到父网格上
-            if (!parentMesh.geometry.boundingBox) {
-                parentMesh.geometry.computeBoundingBox();
-            }
-            const center = parentMesh.geometry.boundingBox.getCenter(new THREE.Vector3());
-            const size = parentMesh.geometry.boundingBox.getSize(new THREE.Vector3());
-
-            this.screenMesh.position.copy(center);
-            this.screenMesh.position.z += size.z / 2 + 0.02; // 2cm offset
+            // 加回父网格保持继承缩放，通过世界矩阵逆变换算出局部坐标
+            const worldPos = new THREE.Vector3(-0.207, 1.459, -2.045);
+            const localPos = parentMesh.worldToLocal(worldPos.clone());
+            this.screenMesh.position.copy(localPos);
             parentMesh.add(this.screenMesh);
         } else {
             // 否则直接添加到场景中
@@ -62,7 +52,8 @@ export class BaseScreenManager {
 
         // 标记为可交互
         this.screenMesh.userData.type = 'canvas-screen';
-        this.screenMesh.userData.interactive = true;
+        this.screenMesh.userData.interactive = false;
+        this.screenMesh.raycast = () => {}; // 完全穿透，不拦截任何射线
 
         return this.screenMesh;
     }
