@@ -5,10 +5,19 @@ import { BaseScreenManager } from './BaseScreenManager.js';
  * Desktop Screen Manager — Windows 10 pixel style
  */
 export class DesktopScreenManager extends BaseScreenManager {
-    constructor(scene, camera, cameraManager) {
+    constructor(scene, camera, cameraManager, config = null) {
         super(scene, camera, cameraManager);
-        this.canvas.width  = 1024;
-        this.canvas.height = 768;
+        
+        // Configuration: prioritize externally passed config (from screenConfig.js)
+        this.config = config || {
+            canvas: { width: 1024, height: 768 },
+            position: { x: -0.388, y: 1.658, z: -2.027 },
+            scale: { width: 1.6, height: 1 }
+        };
+        
+        // Set canvas dimensions from config
+        this.canvas.width = this.config.canvas.width;
+        this.canvas.height = this.config.canvas.height;
         this.icons = [];
     }
 
@@ -16,16 +25,17 @@ export class DesktopScreenManager extends BaseScreenManager {
      * Attach desktop screen to secondary monitor mesh
      * @param {THREE.Mesh} parentMesh  Target mesh
      * @param {Array}      customIcons Icon config array
+     * @param {Object}     position    Position override (optional)
+     * @param {Object}     scale       Scale override (optional)
      */
-    createDesktopScreen(parentMesh, customIcons = null) {
+    createDesktopScreen(parentMesh, customIcons = null, position = null, scale = null) {
         if (customIcons) this.icons = customIcons;
-        this.createScreenMesh(
-            { x: -0.388, y: 1.658, z: -2.027 },   // ← Adjust position in 3D scene
-            { width: 1.6,  height: 1
-
-             },         // ← Adjust size
-            parentMesh
-        );
+        
+        // Use provided position/scale or fall back to config
+        const screenPos = position || this.config.position;
+        const screenScale = scale || this.config.scale;
+        
+        this.createScreenMesh(screenPos, screenScale, parentMesh);
         this.drawDesktop();
     }
 

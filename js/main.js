@@ -43,6 +43,7 @@ function initScene() {
     renderer.toneMapping = THREE.ACESFilmicToneMapping; // ACES Filmic tone mapping
     renderer.toneMappingExposure = 1.0; // Tone mapping exposure
     renderer.physicallyCorrectLights = false; // Disable physically correct lights
+    renderer.dithering = true; // Dithering to prevent light banding artifacts
     document.body.appendChild(renderer.domElement); // Append renderer to document body
 
     // Hide main video panel if video fails to load
@@ -82,16 +83,17 @@ function setupLighting() {
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
     dirLight.position.set(5, 10, 7.5);
     dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.camera.near = 0.5;
-    dirLight.shadow.camera.far = 50;
-    dirLight.shadow.camera.left = -10;
-    dirLight.shadow.camera.right = 10;
-    dirLight.shadow.camera.top = 10;
-    dirLight.shadow.camera.bottom = -10;
-    dirLight.shadow.bias = -0.0001;
-    dirLight.shadow.radius = 2;
+    dirLight.shadow.mapSize.width = 4096;
+    dirLight.shadow.mapSize.height = 4096;
+    dirLight.shadow.camera.near = 1;
+    dirLight.shadow.camera.far = 30;
+    dirLight.shadow.camera.left   = -5;
+    dirLight.shadow.camera.right  =  5;
+    dirLight.shadow.camera.top    =  5;
+    dirLight.shadow.camera.bottom = -5;
+    dirLight.shadow.bias       = -0.0003;
+    dirLight.shadow.normalBias =  0.02;
+    dirLight.shadow.radius = 3;
     scene.add(dirLight);
 
     const fillLight = new THREE.DirectionalLight(0xb0c4de, 0.8);
@@ -128,6 +130,7 @@ function loadModel() {
         { path: './assets/models/models_Static/main_screen.glb', pos: [0, 0, 0], scale: 1, name: 'main_screen' },
         { path: './assets/models/models_Static/Mouse_keyboard.glb', pos: [0, 0, 0], scale: 1, name: 'mouse_keyboard' },
         { path: './assets/models/models_Static/pool_table.glb', pos: [0, 0, 0], scale: 1, name: 'pool_table' },
+        { path: './assets/models/models_Static/pool_table_MeshCollision.glb', pos: [0, 0, 0], scale: 1, name: 'pool_table_MeshCollision' },
         { path: './assets/models/models_Static/Red_billiard_ball_oig.glb', pos: [0, 0, 0], scale: 1, name: 'red_ball' },
         { path: './assets/models/models_Static/White_billiard_ball_oig.glb', pos: [0, 0, 0], scale: 1, name: 'white_ball' },
         { path: './assets/models/models_Static/secondary_screen.glb', pos: [0, 0, 0], scale: 1, name: 'secondary_screen' },
@@ -168,7 +171,7 @@ function loadModel() {
             // Initialize interaction config after all models are loaded
             const interactionsConfig = {
                 computer:         {},
-                pool_table:       { callback: () => startPoolGame(renderer, camera, controls, scene, interactiveObjects) },
+                pool_table:       { skipCamera: true, callback: () => startPoolGame(renderer, camera, controls, scene, interactiveObjects) },
                 main_screen:      {},
                 secondary_screen: {
                     callback: () => {
@@ -260,6 +263,7 @@ function loadModel() {
                         const nameTypeMap = {
                             computer: 'computer',
                             pool_table: 'pool',
+                            pool_table_MeshCollision: 'pool_table_MeshCollision',
                             main_screen: 'main_screen',
                             secondary_screen: 'secondary_screen',
                             whiteboard: 'blackboard',
@@ -304,7 +308,12 @@ function loadModel() {
                         }
                     });
 
-                    const planeGeo = new THREE.PlaneGeometry(2.0, 1.5);
+                    // Compute plane size and position from model bounding box
+                    const box = new THREE.Box3().setFromObject(mdl);
+                    const size   = box.getSize(new THREE.Vector3());
+                    const center = box.getCenter(new THREE.Vector3());
+
+                    const planeGeo = new THREE.PlaneGeometry(size.x, size.z);
                     const planeMat = new THREE.MeshBasicMaterial({
                         color: 0x00ff00,
                         transparent: true,
@@ -312,8 +321,8 @@ function loadModel() {
                         side: THREE.DoubleSide
                     });
                     const plane = new THREE.Mesh(planeGeo, planeMat);
-                    // Place plane slightly above table surface (adjust Y as needed)
-                    plane.position.set(m.pos ? m.pos[0] : 0, 0.85, m.pos ? m.pos[2] : 0);
+                    // Place at model top surface (max Y) slightly raised
+                    plane.position.set(center.x, box.max.y + 0.01, center.z);
                     plane.rotation.x = -Math.PI / 2;
                     plane.name = 'pool_table_plane';
                     plane.userData = {
@@ -325,6 +334,13 @@ function loadModel() {
                     scene.add(plane);
                     if (!interactiveObjects.colliders) interactiveObjects.colliders = {};
                     interactiveObjects.colliders.pool_table_plane = plane;
+
+                    // Store computed table bounds for poolGame
+                    interactiveObjects._tableBounds = {
+                        minX: box.min.x, maxX: box.max.x,
+                        minZ: box.min.z, maxZ: box.max.z,
+                        surfaceY: box.max.y
+                    };
                 }
 
                 onEachLoaded();

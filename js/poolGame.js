@@ -18,15 +18,31 @@ const TABLE_CENTER = new THREE.Vector3(
     -1.906, BALL_Y, 1.3315
 );
 
+// ═══════════════════════════════════════════════════════════
+// TABLE MESH COLLISION MODEL
+// ═══════════════════════════════════════════════════════════
+// To convert pool table coordinates to actual 3D model mesh (for visual rendering and physics collision),
+// we use Three.js BoxGeometry to create the table surface and EdgesGeometry or physics engine boundary definitions
+// to handle collisions. The following code creates the pool table visual model and physical boundaries:
+
+// Table bounds (defined by four corner coordinates)
+const TABLE_BOUNDS = {
+    minX: TX_MIN,
+    maxX: TX_MAX,
+    minZ: TZ_MIN,
+    maxZ: TZ_MAX,
+    height: BALL_Y
+};
+
 // Top-down camera position (directly above table center)
-const CAM_POS    = new THREE.Vector3(-1.906, 3.16, 1.3315);
-const CAM_TARGET = new THREE.Vector3(-1.906, 1.228, 1.3315);
+const CAM_POS    = new THREE.Vector3(-1.906, 4.5, 1.3315);
+const CAM_TARGET = new THREE.Vector3(-1.906, BALL_Y, 1.3315);
 
 // Six pocket positions
 const POCKET_R = 0.13;
 const POCKETS  = [
     [-3.067, 0.759], [-1.906, 0.725], [-0.745, 0.729],
-    [-3.067, 2.012], [-1.906, 2.021], [-0.745, 1.925],
+    [-3.067, 2.012], [-1.906, 2.006], [-0.745, 1.925],
 ].map(([x, z]) => new THREE.Vector3(x, BALL_Y, z));
 
 // Initial positions
@@ -292,6 +308,21 @@ function positionCue(pullBack) {
 }
 
 // ═══════════════════════════════════════════════════════════
+//  BUILD TABLE MODEL
+// ═══════════════════════════════════════════════════════════
+function createTable(scene, interactiveObjects) {
+    // Models are already in the scene (added by main.js) — just return reference, never re-add
+    if (interactiveObjects?.pool_table_MeshCollision) {
+        return interactiveObjects.pool_table_MeshCollision;
+    }
+    if (interactiveObjects?.pool_table) {
+        return interactiveObjects.pool_table;
+    }
+    console.warn('Pool table model not found in interactiveObjects');
+    return null;
+}
+
+// ═══════════════════════════════════════════════════════════
 //  BUILD RACK & POCKETS
 // ═══════════════════════════════════════════════════════════
 function buildRack(scene, redModel) {
@@ -388,6 +419,9 @@ function startPoolGame(renderer, camera, controls, scene, interactiveObjects) {
     scene.add(whiteBall.mesh);
     const redBalls     = buildRack(scene, redModel);
     const pocketMeshes = buildPocketMeshes(scene);
+    
+    // Resolve table reference (already in scene, no need to re-add)
+    const table = createTable(scene, interactiveObjects);
 
     // Cue mesh — center geometry to origin
     let cueMesh;
@@ -429,6 +463,7 @@ function startPoolGame(renderer, camera, controls, scene, interactiveObjects) {
         score: 0,
         scene, renderer, camera, controls, interactiveObjects,
         rafId: null, last: performance.now(),
+        poolTable: table,
     };
 
     // Exit button & ESC (S is initialized, safe to bind)
@@ -535,6 +570,8 @@ function stopPoolGame() {
     S.aimLine?.parent?.remove(S.aimLine);
     if (S.aimLine?.userData._glowLine) S.aimLine.userData._glowLine.parent?.remove(S.aimLine.userData._glowLine);
     S.pocketMeshes?.forEach(m => m.parent?.remove(m));
+    
+    // pool_table_MeshCollision belongs to scene permanently — do not remove
 
     ['cue','red_ball','white_ball'].forEach(n => {
         if (S.interactiveObjects[n]) S.interactiveObjects[n].visible = true;

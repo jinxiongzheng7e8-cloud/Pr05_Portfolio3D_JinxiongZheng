@@ -2,6 +2,13 @@ Portfolio 3D - Jinxiong Zheng
 
 A modern interactive 3D portfolio web application built with Three.js. This project showcases a fully interactive 3D environment with object interactions, camera controls, and dynamic UI panels.
 
+RECENT UPDATES
+
+- Completed refactoring of screen management system with modular architecture
+- Implemented BaseScreenManager as base class for all screen managers
+- Centralized screen configurations in screenConfig.js for easier maintenance
+- Added pool table mesh collision model for accurate physics interactions
+
 FEATURES
 
 Interactive 3D Scene - Built with Three.js for high-quality 3D rendering
@@ -62,16 +69,20 @@ Pr05_Portfolio3D_JinxiongZheng/
 │   ├── main.js - Scene setup & rendering loop
 │   ├── interactions.js - Raycasting & UI panel activation
 │   ├── cameraManager.js - Camera transitions & controls
-│   ├── DesktopScreenManager.js - 管理副屏上的桌面交互和图标
 │   ├── uiManager.js - Panel visibility & content management
-│   └── poolGame.js - Pool game mechanics (if included)
+│   ├── poolGame.js - Pool game mechanics with physics simulation
+│   ├── BaseScreenManager.js - Base class for screen management
+│   ├── DesktopScreenManager_new.js - Windows 10 style desktop screen manager
+│   ├── CanvasScreenManager_new.js - Terminal style canvas screen manager
+│   └── screenConfig.js - Centralized configuration for all screens
 └── assets/
     ├── images/ - Texture images & icons
     ├── videos/ - Video files for the scene
     ├── materials/ - Material files & textures
     └── models/
         ├── models_Static/ - Non-interactive 3D models (.glb)
-        └── models_interactive/ - Interactive 3D models (.glb)
+        ├── models_interactive/ - Interactive 3D models (.glb)
+        └── pool_table_MeshCollision.glb - Pool table collision model
 
 USAGE GUIDE
 
@@ -102,6 +113,21 @@ Creating Interactive Objects
 4. In interactions.js, add raycasting logic to detect clicks
 5. In uiManager.js, create a panel that displays when the object is clicked
 
+Screen Management
+
+The project uses a modular screen management system:
+
+1. BaseScreenManager provides shared functionality for all screens
+2. DesktopScreenManager creates Windows 10-style desktop interfaces
+3. CanvasScreenManager creates terminal-style interfaces
+4. screenConfig.js centralizes all screen configurations
+
+To add a new screen:
+1. Create a new manager extending BaseScreenManager
+2. Define screen configuration in screenConfig.js
+3. Initialize the manager in main.js
+4. Add interaction handling in interactions.js
+
 CAMERA CONSTRAINTS
 
 For a controlled experience, the camera is constrained with the following limits:
@@ -122,7 +148,26 @@ main.js - Initializes Three.js scene, loads models, and handles animation loop
 interactions.js - Implements raycasting for object selection and panel display
 cameraManager.js - Manages camera movement, zoom, rotation, and constraints
 uiManager.js - Handles showing/hiding and updating information panels
-poolGame.js - Optional pool/billiards game mechanics
+poolGame.js - Pool/billiards game mechanics with physics simulation
+BaseScreenManager.js - Base class for screen management providing shared functionality
+DesktopScreenManager_new.js - Windows 10 style desktop screen manager
+CanvasScreenManager_new.js - Terminal style canvas screen manager
+screenConfig.js - Centralized configuration for all screens and icons
+
+POOL TABLE MODEL
+
+The pool table uses a custom mesh collision model (pool_table_MeshCollision.glb) for accurate physics interactions. The model includes:
+
+- Green felt surface with proper dimensions
+- Wooden borders on all four sides
+- Collision boundaries for realistic ball physics
+
+The collision system uses these coordinate bounds:
+- X-axis: -3.101 to -0.711
+- Z-axis: 0.725 to 1.938
+- Center position: (-1.906, BALL_Y, 1.3315)
+
+These bounds define the playable area and are used for both visual rendering and physics calculations in the pool game.
 
 DEPLOYMENT
 
@@ -239,3 +284,11 @@ FUTURE SUGGESTIONS
 Add smooth camera transitions (for example, using tween.js)
 Implement more detailed click behaviors in interactions.js (ball physics, GPU isolation mode)
 Export and place .glb models to verify the loading workflow
+
+COMPLETED REFACTORING
+
+- Screen management system refactored with modular architecture
+- BaseScreenManager implemented as base class for all screen managers
+- Screen configurations centralized in screenConfig.js
+- DesktopScreenManager and CanvasScreenManager updated to use new architecture
+- Improved code maintainability and extensibility

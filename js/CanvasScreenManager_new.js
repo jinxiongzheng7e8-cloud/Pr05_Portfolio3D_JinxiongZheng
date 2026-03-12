@@ -7,12 +7,19 @@ import { BaseScreenManager } from './BaseScreenManager.js';
  * Clicking menu items opens web pages or PDF files
  */
 export class CanvasScreenManager extends BaseScreenManager {
-    constructor(scene, camera, cameraManager, pages = null) {
+    constructor(scene, camera, cameraManager, pages = null, config = null) {
         super(scene, camera, cameraManager);
 
-        // Set canvas dimensions
-        this.canvas.width = 1024;
-        this.canvas.height = 768;
+        // Configuration: prioritize externally passed config (from screenConfig.js)
+        this.config = config || {
+            canvas: { width: 1024, height: 768 },
+            position: { x: 5, y: 2, z: -2 },
+            scale: { width: 4, height: 3 }
+        };
+
+        // Set canvas dimensions from config
+        this.canvas.width = this.config.canvas.width;
+        this.canvas.height = this.config.canvas.height;
 
         // Current page
         this.currentPage = 'desktop';
@@ -55,11 +62,15 @@ export class CanvasScreenManager extends BaseScreenManager {
 
     /**
      * Create screen
-     * @param {Object} position Screen position {x, y, z}
-     * @param {Object} scale Screen scale {width, height}
+     * @param {Object} position Screen position {x, y, z} (optional, overrides config)
+     * @param {Object} scale Screen scale {width, height} (optional, overrides config)
      */
-    createScreen(position = { x: 5, y: 2, z: -2 }, scale = { width: 4, height: 3 }) {
-        this.createScreenMesh(position, scale);
+    createScreen(position = null, scale = null) {
+        // Use provided position/scale or fall back to config
+        const screenPos = position || this.config.position;
+        const screenScale = scale || this.config.scale;
+        
+        this.createScreenMesh(screenPos, screenScale);
         this.drawInterface();
         return this.screenMesh;
     }

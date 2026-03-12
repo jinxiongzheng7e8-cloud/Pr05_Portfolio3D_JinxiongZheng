@@ -6,9 +6,12 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
     const mouse = new THREE.Vector2();
 
     let panelOpen = false;
+
     // Prevent duplicate initialization
     if (renderer.domElement.__interactionsInit) return;
     renderer.domElement.__interactionsInit = true;
+
+    // ── Helpers ─────────────────────────────────────────────────
 
     function collectInteractiveMeshes() {
         const meshes = [];
@@ -27,76 +30,8 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     }
 
-    function onClick(event) {
-        // If a panel is open, close it first so clicks still work
-        if (panelOpen) {
-            document.querySelectorAll('.info-panel').forEach(p => p.classList.add('hidden'));
-            panelOpen = false;
-            if (cameraManager && cameraManager.controls) cameraManager.controls.enabled = true;
-        }
+    // ── Hover highlight ──────────────────────────────────────────
 
-        getMouseCoords(event);
-        raycaster.setFromCamera(mouse, camera);
-
-        // If pool game is active, clicking outside the table stops the game
-        if (window.__poolGameActive) {
-            const interactiveMeshesForCheck = collectInteractiveMeshes();
-            const intersectsCheck = raycaster.intersectObjects(interactiveMeshesForCheck, true);
-            if (intersectsCheck.length > 0) {
-                const hitCheck = intersectsCheck[0].object;
-                const rootNameCheck = hitCheck.userData && (hitCheck.userData.rootName || hitCheck.userData.type);
-                if (rootNameCheck !== 'pool_table') {
-                    try { stopPoolGame(); } catch (e) { console.error(e); }
-                    window.__poolGameActive = false;
-                }
-            } else {
-                try { stopPoolGame(); } catch (e) { console.error(e); }
-                window.__poolGameActive = false;
-            }
-        }
-
-        const interactiveMeshes = collectInteractiveMeshes();
-        const intersects = raycaster.intersectObjects(interactiveMeshes, true);
-        if (intersects.length === 0) return;
-
-        const hit = intersects[0].object;
-        const hitPoint = intersects[0].point.clone();
-
-        // Determine root model name (prefer originalModel from collider userData)
-        let original = hit.userData.originalModel || null;
-        let targetModel = original || hit;
-        let rootName = hit.userData.rootName || hit.userData.type || (original && original.userData && original.userData.type);
-
-        // Canvas screen is non-interactive — skip
-        // if (hit.userData.type === 'canvas-screen') return;
-
-        const cfg = (rootName && interactionsConfig[rootName]) ? interactionsConfig[rootName] : null;
-
-        if (cfg) {
-            if (cfg.panel) {
-                uiManager.showPanel(cfg.panel);
-                panelOpen = true;
-            }
-            if (rootName === 'computer') {
-                cameraManager.goToView('computerView', 1000);
-            } else {
-                cameraManager.goTo(targetModel, 1000);
-            }
-            if (typeof cfg.callback === 'function') {
-                try {
-                    cfg.callback({ hit, root: targetModel, uiManager, cameraManager, interactiveObjects, renderer, camera });
-                } catch (e) {
-                    console.error('interactions: callback error', e);
-                }
-            }
-        } else {
-            // No config found for this object (should not happen)
-            console.warn(`interactions: no config found for "${rootName}" — add it to interactionsConfig in main.js`);
-        }
-
-    }
-
-    // Hover highlight
     let hoveredObject = null;
 
     function restoreHover(obj) {
@@ -135,9 +70,10 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         });
     }
 
+    // ── Mouse move (hover) ───────────────────────────────────────
+
     function onMouseMove(event) {
         if (window.__poolGameActive) {
-            // Clear any lingering hover highlight
             if (hoveredObject) {
                 restoreHover(hoveredObject);
                 hoveredObject = null;
@@ -151,7 +87,6 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
 
         if (intersects.length > 0) {
             const hit = intersects[0].object;
-            // If hit is a collider with originalModel, highlight the original model instead
             const highlightTarget = hit.userData && hit.userData.originalModel ? hit.userData.originalModel : hit;
             if (hoveredObject !== highlightTarget) {
                 if (hoveredObject) restoreHover(hoveredObject);
@@ -166,7 +101,77 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         }
     }
 
-    // Close panel buttons
+    // ── Double-click (interact) ──────────────────────────────────
+
+    function onClick(event) {
+        // Close any open panel first
+        if (panelOpen) {
+            document.querySelectorAll('.info-panel').forEach(p => p.classList.add('hidden'));
+            panelOpen = false;
+            if (cameraManager && cameraManager.controls) cameraManager.controls.enabled = true;
+        }
+
+        getMouseCoords(event);
+        raycaster.setFromCamera(mouse, camera);
+
+        // Pool game active: outside click stops game
+        if (window.__poolGameActive) {
+            const meshes = collectInteractiveMeshes();
+            const hits = raycaster.intersectObjects(meshes, true);
+            if (hits.length > 0) {
+                const rootName = hits[0].object.userData.rootName || hits[0].object.userData.type;
+                const isPoolObject = rootName === 'pool_table' ||
+                                     rootName === 'pool_table_MeshCollision' ||
+                                     rootName === 'poolBall' ||
+                                     rootName === 'poolCue';
+                if (!isPoolObject) {
+                    try { stopPoolGame(); } catch (e) { console.error(e); }
+                    window.__poolGameActive = false;
+                }
+            }
+            return;
+        }
+
+        const interactiveMeshes = collectInteractiveMeshes();
+        const intersects = raycaster.intersectObjects(interactiveMeshes, true);
+        if (intersects.length === 0) return;
+
+        const hit = intersects[0].object;
+        const original = hit.userData.originalModel || null;
+        const targetModel = original || hit;
+        const rootName = hit.userData.rootName || hit.userData.type || (original && original.userData && original.userData.type);
+
+        const cfg = (rootName && interactionsConfig[rootName]) ? interactionsConfig[rootName] : null;
+
+        if (cfg) {
+            if (cfg.panel) {
+                uiManager.showPanel(cfg.panel);
+                panelOpen = true;
+            }
+
+            // skipCamera: let the callback manage its own camera (e.g. pool game)
+            if (!cfg.skipCamera) {
+                if (rootName === 'computer') {
+                    cameraManager.goToView('computerView', 1000);
+                } else {
+                    cameraManager.goTo(targetModel, 1000);
+                }
+            }
+
+            if (typeof cfg.callback === 'function') {
+                try {
+                    cfg.callback({ hit, root: targetModel, uiManager, cameraManager, interactiveObjects, renderer, camera });
+                } catch (e) {
+                    console.error('interactions: callback error', e);
+                }
+            }
+        } else {
+            console.warn(`interactions: no config found for "${rootName}" — add it to interactionsConfig in main.js`);
+        }
+    }
+
+    // ── Panel / ESC close ────────────────────────────────────────
+
     document.querySelectorAll('.close-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.info-panel').forEach(p => p.classList.add('hidden'));
@@ -175,7 +180,6 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         });
     });
 
-    // ESC closes panel
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             document.querySelectorAll('.info-panel').forEach(p => p.classList.add('hidden'));
@@ -188,7 +192,8 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         }
     });
 
-    renderer.domElement.addEventListener('dblclick', onClick, false);
-    renderer.domElement.addEventListener('mousemove', onMouseMove, {passive: true});
+    // ── Event listeners ──────────────────────────────────────────
 
+    renderer.domElement.addEventListener('dblclick', onClick, false);
+    renderer.domElement.addEventListener('mousemove', onMouseMove, { passive: true });
 }

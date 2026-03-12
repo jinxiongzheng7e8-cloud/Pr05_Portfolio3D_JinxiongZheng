@@ -63,3 +63,17 @@ export const screenScales = {
     desktop: { width: 1.0, height: 0.75 },
     canvas: { width: 4, height: 3 }
 };
+
+// Canvas screen manager configuration
+export const canvasScreenConfig = {
+    canvas: { width: 1024, height: 768 },
+    position: { x: 5, y: 2, z: -2 },
+    scale: { width: 4, height: 3 }
+};
+
+// Desktop screen manager configuration
+export const desktopScreenConfig = {
+    canvas: { width: 1024, height: 768 },
+    position: { x: -0.388, y: 1.658, z: -2.027 },
+    scale: { width: 1.6, height: 1 }
+};
