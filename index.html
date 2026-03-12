@@ -4,11 +4,12 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Jinxiong Zheng - Portfolio 3D</title>
+	<link rel="icon" type="image/png" href="assets/images/icon.png">
 	<link rel="stylesheet" href="css/style.css">
 	<meta name="description" content="Portfolio 3D - Three.js showcase">
 </head>
 <body>
-	<!-- 启动页面 -->
+	<!-- Start screen -->
 	<div id="start-screen" class="start-screen">
 		<div class="start-content">
 			<h1 class="start-title">Jinxiong Zheng - Portfolio 3D</h1>
@@ -17,7 +18,7 @@
 		</div>
 	</div>
 
-	<!-- 加载进度条 -->
+	<!-- Loading bar -->
 	<div id="loading-screen" class="loading-screen hidden">
 		<div class="loading-content">
 			<h2 class="loading-title">Loading Scene...</h2>
@@ -30,35 +31,28 @@
 
 	<!-- Three.js canvas will be appended to body by the renderer -->
 
+	<!-- Logo -->
+	<div id="site-logo">
+		<img src="assets/images/Logo.png" alt="Logo" class="logo-img">
+		<div class="logo-text">
+			<span class="logo-name">Jinxiong Zheng</span>
+			<span class="logo-sub">Portfolio 3D</span>
+		</div>
+	</div>
+
 	<button id="reset-view-btn" class="ui-button">🏠 Reset View</button>
 
-	<!-- Camera Position Display -->
-	<div id="camera-position" class="camera-hud">
-		<span class="hud-label">Camera:</span>
-		<span id="camera-x" class="hud-value">X: 0.00</span>
-		<span id="camera-y" class="hud-value">Y: 0.00</span>
-		<span id="camera-z" class="hud-value">Z: 0.00</span>
-	</div>
-
-	<!-- Camera Rotation Display -->
-	<div id="camera-rotation" class="camera-hud" style="bottom: 70px;">
-		<span class="hud-label">Rotation:</span>
-		<span id="camera-rot-x" class="hud-value">Pitch: 0.0°</span>
-		<span id="camera-rot-y" class="hud-value">Yaw: 0.0°</span>
-		<span id="camera-rot-z" class="hud-value">Roll: 0.0°</span>
-	</div>
-
-	<!-- ── SCREEN OVERLAY (弹出式 Win10 桌面) ───────────── -->
+	<!-- ── SCREEN OVERLAY (Win10 desktop popup) ────────────── -->
 	<div id="screen-overlay">
 		<div id="screen-overlay-inner">
-			<!-- 标题栏 -->
+			<!-- Title bar -->
 			<div id="sov-titlebar">
 				<div id="sov-winlogo"><span></span><span></span><span></span><span></span></div>
 				<span id="sov-title">Secondary Monitor — Desktop</span>
 				<div id="sov-close" title="Close">✕</div>
 			</div>
 
-			<!-- 桌面区域 -->
+			<!-- Desktop area -->
 			<div id="sov-desktop">
 				<div class="sov-icon" data-type="pdf" data-path="docs/CV_Jinxiong_Zheng.pdf">
 					<div class="sov-icon-img">📄</div>
@@ -78,7 +72,7 @@
 				</div>
 			</div>
 
-			<!-- 任务栏 -->
+			<!-- Taskbar -->
 			<div id="sov-taskbar">
 				<div id="sov-startbtn" title="Start">
 					<div id="sov-winsmall"><span></span><span></span><span></span><span></span></div>
@@ -88,7 +82,7 @@
 			</div>
 		</div>
 
-		<!-- 开始菜单 -->
+		<!-- Start menu -->
 		<div id="sov-startmenu">
 			<div id="sov-menu-banner">
 				<div id="sov-avatar">👤</div>
@@ -142,33 +136,33 @@
 	<script type="module" src="js/main.js"></script>
 
 	<script>
-	/* ── Screen Overlay 桌面 JS ── */
+	/* ── Screen Overlay JS ── */
 	(function () {
 		const overlay    = document.getElementById('screen-overlay');
 		const startMenu  = document.getElementById('sov-startmenu');
 
-		// 关闭 overlay，并通知 main.js 重置相机
+		// Close overlay and notify main.js to reset camera
 		function closeOverlay() {
 			overlay.classList.remove('open');
 			startMenu.classList.remove('open');
-			// 重置相机回首页视角
+			// Reset camera to home view
 			window.dispatchEvent(new CustomEvent('ui:resetView'));
 		}
 
-		// 关闭按钮
+		// Close button
 		document.getElementById('sov-close').addEventListener('click', closeOverlay);
 
-		// 点击 overlay 背景（暗区）关闭
+		// Click on overlay background (dark area) to close
 		overlay.addEventListener('click', function (e) {
 			if (e.target === overlay) closeOverlay();
 		});
 
-		// ESC 关闭
+		// ESC to close
 		window.addEventListener('keydown', function (e) {
 			if (e.key === 'Escape' && overlay.classList.contains('open')) closeOverlay();
 		});
 
-		// ── 桌面图标：单击选中，双击执行 ──
+		// ── Desktop icons: single-click to select, double-click to open ──
 		document.querySelectorAll('.sov-icon').forEach(function (icon) {
 			var last = 0;
 			icon.addEventListener('click', function () {
@@ -180,7 +174,7 @@
 			});
 		});
 
-		// ── 开始菜单 ──
+		// ── Start menu ──
 		document.getElementById('sov-startbtn').addEventListener('click', function (e) {
 			e.stopPropagation();
 			startMenu.classList.toggle('open');
@@ -199,14 +193,14 @@
 
 		document.getElementById('sov-back').addEventListener('click', closeOverlay);
 
-		// ── 动作处理 ──
+		// ── Action handler ──
 		function handleSovAction(el) {
 			var type = el.dataset.type;
 			if (type === 'link' && el.dataset.url)  window.open(el.dataset.url,  '_blank');
 			if (type === 'pdf'  && el.dataset.path) window.open(el.dataset.path, '_blank');
 		}
 
-		// ── 时钟 ──
+		// ── Clock ──
 		function updateSovClock() {
 			var now = new Date();
 			var t = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });

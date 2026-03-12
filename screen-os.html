@@ -392,7 +392,7 @@
 
 <div id="wallpaper"></div>
 
-<!-- 桌面图标 -->
+<!-- Desktop icons -->
 <div id="desktop">
     <div class="icon" data-type="pdf" data-path="docs/CV_Jinxiong_Zheng.pdf" data-label="CV">
         <div class="icon-img">📄</div>
@@ -412,7 +412,7 @@
     </div>
 </div>
 
-<!-- 桌面关机按钮（右下角）-->
+<!-- Desktop power button (bottom-right) -->
 <div id="desk-shutdown">
     <div class="icon" id="shutdown-desk-icon" style="width:56px;">
         <div class="icon-img" style="font-size:22px;">⏻</div>
@@ -420,9 +420,9 @@
     </div>
 </div>
 
-<!-- 任务栏 -->
+<!-- Taskbar -->
 <div id="taskbar">
-    <!-- 开始按钮 -->
+    <!-- Start button -->
     <div id="start-trigger" class="raised">
         <div id="win-logo-small"><span></span><span></span><span></span><span></span></div>
         Start
@@ -430,13 +430,13 @@
 
     <div class="tb-divider"></div>
 
-    <!-- 系统托盘 -->
+    <!-- System tray -->
     <div id="tray">
         <div id="clock-display">00:00</div>
     </div>
 </div>
 
-<!-- 开始菜单 -->
+<!-- Start menu -->
 <div id="start-menu">
     <div id="menu-banner">
         <div class="user-avatar-px">👤</div>
@@ -485,7 +485,7 @@
     </div>
 </div>
 
-<!-- 关机确认弹窗 -->
+<!-- Power confirmation dialog -->
 <div class="dialog-overlay" id="shutdown-dialog">
     <div class="dialog-box">
         <div class="dialog-titlebar">
@@ -507,7 +507,7 @@
 </div>
 
 <script>
-    // ── 时钟 ──────────────────────────────
+    // ── Clock ──────────────────────────────
     function updateClock() {
         const now = new Date();
         document.getElementById('clock-display').textContent =
@@ -516,7 +516,7 @@
     updateClock();
     setInterval(updateClock, 10000);
 
-    // ── 动作处理 ──────────────────────────
+    // ── Action handler ─────────────────────
     function handleAction(el) {
         const action = el.dataset.action;
         const type   = el.dataset.type;
@@ -525,7 +525,7 @@
         if (type === 'pdf'  && el.dataset.path) { window.open(el.dataset.path, '_blank'); closeStartMenu(); }
     }
 
-    // ── 桌面图标（双击执行，单击选中）──────
+    // ── Desktop icons (double-click to open, single-click to select) ──
     document.querySelectorAll('#desktop .icon').forEach(icon => {
         let last = 0;
         icon.addEventListener('click', () => {
@@ -537,10 +537,10 @@
         });
     });
 
-    // 桌面关机按钮
+    // Desktop power button
     document.getElementById('shutdown-desk-icon').addEventListener('click', showShutdownDialog);
 
-    // ── 开始菜单 ──────────────────────────
+    // ── Start menu ─────────────────────────
     const startMenu = document.getElementById('start-menu');
 
     function openStartMenu() {
@@ -557,7 +557,7 @@
         startMenu.classList.contains('open') ? closeStartMenu() : openStartMenu();
     });
 
-    // 开始菜单项点击
+    // Start menu item click
     document.querySelectorAll('#menu-items .menu-item').forEach(item => {
         item.addEventListener('click', () => handleAction(item));
     });
@@ -571,12 +571,12 @@
         showShutdownDialog();
     });
 
-    // 点击外部关闭开始菜单
+    // Click outside to close start menu
     document.addEventListener('click', e => {
         if (!startMenu.contains(e.target) && e.target.id !== 'start-trigger') closeStartMenu();
     });
 
-    // ── 关机弹窗 ──────────────────────────
+    // ── Power dialog ────────────────────────
     const shutdownDialog = document.getElementById('shutdown-dialog');
 
     function showShutdownDialog() {
@@ -590,7 +590,7 @@
     document.getElementById('dlg-cancel').addEventListener('click', hideShutdownDialog);
     document.getElementById('dlg-close').addEventListener('click',  hideShutdownDialog);
 
-    // 点击 overlay 关闭
+    // Click overlay to close
     shutdownDialog.addEventListener('click', e => { if (e.target === shutdownDialog) hideShutdownDialog(); });
 
     // ── ESC ───────────────────────────────

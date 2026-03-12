@@ -6,7 +6,7 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
     const mouse = new THREE.Vector2();
 
     let panelOpen = false;
-    // 防止重复初始化
+    // Prevent duplicate initialization
     if (renderer.domElement.__interactionsInit) return;
     renderer.domElement.__interactionsInit = true;
 
@@ -38,7 +38,7 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         getMouseCoords(event);
         raycaster.setFromCamera(mouse, camera);
 
-        // 如果台球小游戏正在运行，点击非台面区域时停止游戏
+        // If pool game is active, clicking outside the table stops the game
         if (window.__poolGameActive) {
             const interactiveMeshesForCheck = collectInteractiveMeshes();
             const intersectsCheck = raycaster.intersectObjects(interactiveMeshesForCheck, true);
@@ -62,12 +62,12 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         const hit = intersects[0].object;
         const hitPoint = intersects[0].point.clone();
 
-        // 确定根模型名称（优先使用碰撞体关联的 originalModel）
+        // Determine root model name (prefer originalModel from collider userData)
         let original = hit.userData.originalModel || null;
         let targetModel = original || hit;
         let rootName = hit.userData.rootName || hit.userData.type || (original && original.userData && original.userData.type);
 
-        // Handle Canvas Screen clicks (desktop-style) — 已改为不可互动，跳过
+        // Canvas screen is non-interactive — skip
         // if (hit.userData.type === 'canvas-screen') return;
 
         const cfg = (rootName && interactionsConfig[rootName]) ? interactionsConfig[rootName] : null;
@@ -90,15 +90,13 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
                 }
             }
         } else {
-            // 没有找到 interactionsConfig 配置时的兜底处理（理论上不应再触发）
-            console.warn(`interactions: 未找到对象 "${rootName}" 的配置，请在 main.js 的 interactionsConfig 中添加。`);
+            // No config found for this object (should not happen)
+            console.warn(`interactions: no config found for "${rootName}" — add it to interactionsConfig in main.js`);
         }
 
-        // 显示坐标弹出框（调试用）
-        createCoordPopup(hitPoint);
     }
 
-    // 悬停高亮
+    // Hover highlight
     let hoveredObject = null;
 
     function restoreHover(obj) {
@@ -138,6 +136,14 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
     }
 
     function onMouseMove(event) {
+        if (window.__poolGameActive) {
+            // Clear any lingering hover highlight
+            if (hoveredObject) {
+                restoreHover(hoveredObject);
+                hoveredObject = null;
+            }
+            return;
+        }
         getMouseCoords(event);
         raycaster.setFromCamera(mouse, camera);
         const interactiveMeshes = collectInteractiveMeshes();
@@ -160,7 +166,7 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         }
     }
 
-    // 关闭面板按钮
+    // Close panel buttons
     document.querySelectorAll('.close-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.info-panel').forEach(p => p.classList.add('hidden'));
@@ -169,7 +175,7 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
         });
     });
 
-    // ESC 关闭面板
+    // ESC closes panel
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             document.querySelectorAll('.info-panel').forEach(p => p.classList.add('hidden'));
@@ -185,74 +191,4 @@ export function initInteractions(renderer, camera, scene, interactiveObjects, ui
     renderer.domElement.addEventListener('dblclick', onClick, false);
     renderer.domElement.addEventListener('mousemove', onMouseMove, {passive: true});
 
-    // 坐标弹出框（调试用）
-    let _coordPopup = null;
-    function createCoordPopup(worldPos) {
-        if (_coordPopup) _coordPopup.remove();
-        const rect = renderer.domElement.getBoundingClientRect();
-        const vector = worldPos.clone().project(camera);
-        const x = (vector.x + 1) / 2 * rect.width + rect.left;
-        const y = (-vector.y + 1) / 2 * rect.height + rect.top;
-
-        const div = document.createElement('div');
-        div.className = 'coord-popup';
-        const coordsText = `X: ${worldPos.x.toFixed(3)} Y: ${worldPos.y.toFixed(3)} Z: ${worldPos.z.toFixed(3)}`;
-        div.innerHTML = `
-            <div class="coord-header">Coordinates <button class="coord-close">✕</button></div>
-            <div class="coord-body">${coordsText}</div>
-            <div class="coord-actions"><button class="coord-copy">Copy</button></div>
-        `;
-        div.style.position = 'absolute';
-        div.style.left = `${Math.round(x)}px`;
-        div.style.top = `${Math.round(y)}px`;
-        div.style.transform = 'translate(-50%, -110%)';
-        document.body.appendChild(div);
-        _coordPopup = div;
-
-        div.querySelector('.coord-close').addEventListener('click', () => {
-            div.remove();
-            _coordPopup = null;
-        });
-
-        div.querySelector('.coord-copy').addEventListener('click', async () => {
-            try {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(coordsText);
-                } else {
-                    const ta = document.createElement('textarea');
-                    ta.value = coordsText;
-                    document.body.appendChild(ta);
-                    ta.select();
-                    document.execCommand('copy');
-                    ta.remove();
-                }
-                const b = div.querySelector('.coord-copy');
-                const orig = b.textContent;
-                b.textContent = 'Copied!';
-                setTimeout(() => b.textContent = orig, 1200);
-            } catch (e) {
-                console.error('Copy failed', e);
-            }
-        });
-
-        const updatePos = () => {
-            if (!document.body.contains(div)) return;
-            const vec = worldPos.clone().project(camera);
-            const nx = (vec.x + 1) / 2 * rect.width + rect.left;
-            const ny = (-vec.y + 1) / 2 * rect.height + rect.top;
-            div.style.left = `${Math.round(nx)}px`;
-            div.style.top = `${Math.round(ny)}px`;
-        };
-
-        let rafId = null;
-        function rafLoop() {
-            if (!document.body.contains(div)) {
-                if (rafId) cancelAnimationFrame(rafId);
-                return;
-            }
-            updatePos();
-            rafId = requestAnimationFrame(rafLoop);
-        }
-        rafLoop();
-    }
 }

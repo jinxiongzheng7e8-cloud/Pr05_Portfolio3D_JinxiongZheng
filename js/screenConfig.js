@@ -1,7 +1,6 @@
-
 /**
- * 屏幕配置文件
- * 集中管理所有屏幕内容和图标配置
+ * Screen configuration file
+ * Centralized configuration for all screen content and icons
  */
 
 // Desktop icon configuration

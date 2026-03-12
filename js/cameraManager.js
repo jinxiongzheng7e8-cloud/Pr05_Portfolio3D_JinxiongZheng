@@ -135,7 +135,7 @@ export class CameraManager {
         if (target) {
             this.controls.target.copy(target);
         } else {
-            // 默认看向世界高度 0.9 处的点，可根据需要改为 (0,0,0)
+            // Default look-at: world height 0.9 (change to (0,0,0) if needed)
             this.controls.target.set(0, 0.9, 0);
         }
         this.controls.update();

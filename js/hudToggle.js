@@ -1,11 +1,11 @@
 /**
- * hudToggle.js — 坐标 HUD 显示开关
- * 默认隐藏，按 H 键或调用 setHudVisible(true/false) 切换
+ * hudToggle.js — Coordinate HUD visibility toggle
+ * Hidden by default. Press H or call setHudVisible(true/false) to toggle.
  */
 
 const HUD_IDS = ['camera-position', 'camera-rotation'];
 
-let _hudVisible = false; // 默认关闭
+let _hudVisible = false; // Hidden by default
 
 function applyHudState() {
     HUD_IDS.forEach(id => {
@@ -14,22 +14,22 @@ function applyHudState() {
     });
 }
 
-/** 设置 HUD 可见性 */
+/** Set HUD visibility */
 export function setHudVisible(visible) {
     _hudVisible = visible;
     applyHudState();
 }
 
-/** 切换 HUD 可见性 */
+/** Toggle HUD visibility */
 export function toggleHud() {
     setHudVisible(!_hudVisible);
 }
 
-/** 初始化：隐藏 HUD，绑定 H 键开关 */
+/** Initialize: hide HUD and bind H key */
 export function initHudToggle() {
     applyHudState();
     window.addEventListener('keydown', (e) => {
-        // 避免在输入框里触发
+        // Ignore keydown events inside input fields
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         if (e.key === 'h' || e.key === 'H') toggleHud();
     });

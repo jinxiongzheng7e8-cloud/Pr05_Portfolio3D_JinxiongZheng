@@ -4,7 +4,7 @@ body {
 	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* 启动页面样式 */
+/* Start screen styles */
 .start-screen {
 	position: fixed;
 	top: 0;
@@ -71,7 +71,7 @@ body {
 	transform: translateY(-3px);
 }
 
-/* 加载进度条样式 */
+/* Loading progress bar styles */
 .loading-screen {
 	position: fixed;
 	top: 0;
@@ -126,11 +126,52 @@ body {
 	color: #a0a0a0;
 }
 
+/* Logo */
+#site-logo {
+	position: fixed;
+	top: 18px;
+	left: 20px;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	pointer-events: none;
+}
+
+.logo-img {
+	width: 38px;
+	height: 38px;
+	object-fit: contain;
+	flex-shrink: 0;
+}
+
+.logo-text {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.2;
+}
+
+.logo-name {
+	font-size: 13px;
+	font-weight: 700;
+	color: #fff;
+	text-shadow: 0 0 8px rgba(0, 170, 255, 0.6);
+	letter-spacing: 0.5px;
+}
+
+.logo-sub {
+	font-size: 10px;
+	color: #00aaff;
+	letter-spacing: 2px;
+	text-transform: uppercase;
+	opacity: 0.85;
+}
+
 /* Botón de reset siempre visible */
 #reset-view-btn {
 	position: absolute;
 	top: 20px;
-	left: 20px;
+	left: 200px;
 	z-index: 10;
 	padding: 10px 20px;
 	background-color: rgba(0,0,0,0.7);
@@ -145,7 +186,7 @@ body {
 	color: black;
 }
 
-/* 相机位置HUD显示 */
+/* Camera position HUD */
 .camera-hud {
 	position: absolute;
 	bottom: 20px;
@@ -271,7 +312,7 @@ body {
 
 
 /* ════════════════════════════════════════════════════════
-   SCREEN OVERLAY — Win10 桌面弹窗
+   SCREEN OVERLAY — Win10 desktop popup
    ════════════════════════════════════════════════════════ */
 
 #screen-overlay {
@@ -292,7 +333,7 @@ body {
 	pointer-events: auto;
 }
 
-/* 屏幕内容容器 — 带入场缩放动画 */
+/* Screen content container — with scale-in animation */
 #screen-overlay-inner {
 	width: 720px;
 	max-width: 92vw;
@@ -315,7 +356,7 @@ body {
 	transform: scale(1) translateY(0);
 }
 
-/* 标题栏 */
+/* Title bar */
 #sov-titlebar {
 	display: flex;
 	align-items: center;
@@ -371,7 +412,7 @@ body {
 	border-bottom: 2px solid #fff;
 }
 
-/* 桌面区域 */
+/* Desktop area */
 #sov-desktop {
 	flex: 1;
 	padding: 14px 12px;
@@ -381,7 +422,7 @@ body {
 	align-content: flex-start;
 	gap: 8px;
 	position: relative;
-	/* 壁纸：Win10 蓝色渐变 + 像素网格 */
+	/* Wallpaper: Win10 blue gradient + pixel grid */
 	background:
 		repeating-linear-gradient(0deg,   transparent, transparent 7px, rgba(255,255,255,0.018) 7px, rgba(255,255,255,0.018) 8px),
 		repeating-linear-gradient(90deg,  transparent, transparent 7px, rgba(255,255,255,0.018) 7px, rgba(255,255,255,0.018) 8px),
@@ -389,7 +430,7 @@ body {
 	overflow: hidden;
 }
 
-/* 桌面图标 */
+/* Desktop icons */
 .sov-icon {
 	display: flex;
 	flex-direction: column;
@@ -422,7 +463,7 @@ body {
 	line-height: 1.3;
 }
 
-/* 任务栏 */
+/* Taskbar */
 #sov-taskbar {
 	height: 36px;
 	background: rgba(0,0,0,0.88);
@@ -479,10 +520,10 @@ body {
 	padding: 0 6px;
 }
 
-/* 开始菜单 */
+/* Start menu */
 #sov-startmenu {
 	position: absolute;
-	bottom: calc(36px + 2px);  /* 任务栏高度 + border */
+	bottom: calc(36px + 2px);  /* Taskbar height + border */
 	left: 0;
 	width: 260px;
 	background: #1a1a2a;

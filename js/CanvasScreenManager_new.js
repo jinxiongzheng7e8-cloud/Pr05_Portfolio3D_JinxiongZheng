@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import { BaseScreenManager } from './BaseScreenManager.js';
 
 /**
- * Canvas屏幕管理器（终端风格）
- * 在3D平面上绘制一个类似终端的界面，包含菜单选项
- * 点击菜单项可打开网页或PDF文件
+ * Canvas Screen Manager (terminal style)
+ * Draws a terminal-style interface on a 3D plane with menu options
+ * Clicking menu items opens web pages or PDF files
  */
 export class CanvasScreenManager extends BaseScreenManager {
     constructor(scene, camera, cameraManager, pages = null) {
@@ -54,9 +54,9 @@ export class CanvasScreenManager extends BaseScreenManager {
     }
 
     /**
-     * 创建屏幕
-     * @param {Object} position 屏幕位置 {x, y, z}
-     * @param {Object} scale 屏幕缩放 {width, height}
+     * Create screen
+     * @param {Object} position Screen position {x, y, z}
+     * @param {Object} scale Screen scale {width, height}
      */
     createScreen(position = { x: 5, y: 2, z: -2 }, scale = { width: 4, height: 3 }) {
         this.createScreenMesh(position, scale);
@@ -65,7 +65,7 @@ export class CanvasScreenManager extends BaseScreenManager {
     }
 
     /**
-     * 绘制界面
+     * Draw interface
      */
     drawInterface() {
         const ctx = this.ctx;
@@ -165,7 +165,7 @@ export class CanvasScreenManager extends BaseScreenManager {
     }
 
     /**
-     * 处理区域点击
+     * Handle area click
      */
     handleAreaClick(area) {
         if (area.item) {
@@ -174,7 +174,7 @@ export class CanvasScreenManager extends BaseScreenManager {
     }
 
     /**
-     * 处理按钮点击
+     * Handle button click
      */
     handleButtonClick(item) {
         // Handle action-based navigation: any string becomes a page key
@@ -194,7 +194,7 @@ export class CanvasScreenManager extends BaseScreenManager {
     }
 
     /**
-     * 更新页面内容
+     * Update page content
      */
     updatePageContent(pageName, newItems) {
         if (this.pages[pageName]) {
@@ -206,7 +206,7 @@ export class CanvasScreenManager extends BaseScreenManager {
     }
 
     /**
-     * 设置当前页面
+     * Set current page
      */
     setPage(pageName) {
         if (this.pages[pageName]) {
@@ -216,7 +216,7 @@ export class CanvasScreenManager extends BaseScreenManager {
     }
 
     /**
-     * 重置到主页面
+     * Reset to main page
      */
     resetToMainPage() {
         this.setPage('main');
